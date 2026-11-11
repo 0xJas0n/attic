@@ -4,6 +4,7 @@ import type { Asset, AssetsResponse } from '~/types/api'
 
 const props = defineProps<{ asset: Asset, summary?: Asset['containment_summary'] }>()
 const emit = defineEmits<{ changed: [] }>()
+const { t } = useI18n()
 const { settings } = useOrganizationSettings()
 const apiFetch = useApiFetch()
 const toast = useToast()
@@ -182,7 +183,7 @@ async function link() {
     await loadResults()
     emit('changed')
   } catch (error: unknown) {
-    toast.add({ title: (error as { data?: { error?: string } }).data?.error || 'Failed to link asset', color: 'error' })
+    toast.add({ title: (error as { data?: { error?: string } }).data?.error || t('assets.contentsBrowser.linkFailed'), color: 'error' })
   } finally { linking.value = false }
 }
 watch([active, nested], () => {
@@ -217,14 +218,14 @@ watch(() => props.asset, (asset) => {
   known[asset.id] = { ...asset, child_count: branches[asset.id]?.total ?? asset.child_count }
 })
 function price(asset: Asset) {
-  return asset.purchase_price == null ? 'Price unknown' : formatPurchasePrice(asset.purchase_price * asset.quantity, settings.value.currency)
+  return asset.purchase_price == null ? t('assets.contentsBrowser.priceUnknown') : formatPurchasePrice(asset.purchase_price * asset.quantity, settings.value.currency)
 }
 </script>
 
 <template>
   <section
     class="attic-panel overflow-hidden rounded-[20px] text-default"
-    aria-label="Contents"
+    :aria-label="t('assets.contentsBrowser.title')"
   >
     <header class="flex flex-wrap items-center justify-between gap-4 border-b border-mist-100 px-4 py-4 dark:border-mist-700 sm:px-5">
       <div>
@@ -232,28 +233,28 @@ function price(asset: Asset) {
           <UIcon
             name="i-lucide-boxes"
             class="size-5 text-attic-500"
-          />Contents
+          />{{ t('assets.contentsBrowser.title') }}
           <span
             v-if="hasRootContents"
             class="rounded-full bg-mist-100 px-2 py-0.5 text-xs font-medium text-muted dark:bg-mist-800"
-          >{{ rootContentsCount }} direct</span>
+          >{{ t('assets.contentsBrowser.directCount', { count: rootContentsCount }) }}</span>
         </h2>
         <p class="mt-1 text-xs text-muted">
-          The assets kept inside this item.
+          {{ t('assets.contentsBrowser.subtitle') }}
         </p>
       </div>
       <div
         v-if="summary && hasRootContents"
         role="region"
-        aria-label="Total cost including contents"
+        :aria-label="t('assets.contentsBrowser.totalIncludingContents')"
         class="min-w-0 sm:text-right"
       >
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:justify-end">
-          <span class="text-xs font-medium text-muted">{{ summary.unpriced_asset_count ? 'Known total' : 'Total purchase cost' }}</span>
+          <span class="text-xs font-medium text-muted">{{ summary.unpriced_asset_count ? t('assets.contentsBrowser.knownTotal') : t('assets.contentsBrowser.totalCost') }}</span>
           <span class="text-xl font-bold tabular-nums text-default">{{ formatPurchasePrice(summary.total_value, settings.currency) }}</span>
         </div>
         <p class="mt-1 break-words text-xs text-muted">
-          {{ asset.name }} + all nested contents<span v-if="summary.unpriced_asset_count"> · {{ summary.unpriced_asset_count }} {{ summary.unpriced_asset_count === 1 ? 'price' : 'prices' }} missing</span>
+          {{ t('assets.contentsBrowser.allNested', { name: asset.name }) }}<span v-if="summary.unpriced_asset_count"> · {{ t('assets.contentsBrowser.pricesMissing', { count: summary.unpriced_asset_count }, summary.unpriced_asset_count) }}</span>
         </p>
       </div>
     </header>
@@ -271,7 +272,7 @@ function price(asset: Asset) {
           </h3><NuxtLink
             :to="`/assets/${active}`"
             class="text-xs font-medium text-attic-500 hover:underline"
-          >View asset ↗</NuxtLink>
+          >{{ t('assets.contentsBrowser.viewAsset') }}</NuxtLink>
         </div>
       </div>
       <div class="ml-auto flex flex-wrap gap-2">
@@ -281,7 +282,7 @@ function price(asset: Asset) {
           variant="soft"
           icon="i-lucide-plus"
         >
-          Add asset
+          {{ t('assets.contentsBrowser.addAsset') }}
         </UButton><UButton
           size="sm"
           variant="ghost"
@@ -290,7 +291,7 @@ function price(asset: Asset) {
           :aria-expanded="pickerOpen"
           @click="pickerOpen = !pickerOpen"
         >
-          Link existing asset
+          {{ t('assets.contentsBrowser.linkExisting') }}
         </UButton>
       </div>
     </div>
@@ -298,14 +299,14 @@ function price(asset: Asset) {
       <aside
         v-if="!rootEmpty"
         class="min-w-0 border-b border-mist-100 bg-mist-50/40 dark:border-mist-700 dark:bg-mist-800/20 lg:border-b-0 lg:border-r"
-        aria-label="Asset hierarchy"
+        :aria-label="t('assets.contentsBrowser.hierarchyLabel')"
       >
         <div
           id="contents-hierarchy"
           class="max-h-80 overflow-auto p-3 lg:max-h-[520px]"
         >
           <p class="mb-3 px-2 text-xs font-bold uppercase tracking-wider text-muted">
-            Hierarchy
+            {{ t('assets.contentsBrowser.hierarchy') }}
           </p>
           <template
             v-for="row in treeRows"
@@ -322,7 +323,7 @@ function price(asset: Asset) {
                 type="button"
                 class="flex size-7 shrink-0 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-attic-500"
                 :aria-expanded="expanded.has(row.asset.id)"
-                :aria-label="`${expanded.has(row.asset.id) ? 'Collapse' : 'Expand'} ${row.asset.name}`"
+                :aria-label="expanded.has(row.asset.id) ? t('assets.contentsBrowser.collapse', { name: row.asset.name }) : t('assets.contentsBrowser.expand', { name: row.asset.name })"
                 @click="toggle(row.asset)"
               >
                 <UIcon
@@ -338,7 +339,7 @@ function price(asset: Asset) {
                 type="button"
                 class="flex flex-1 items-center gap-2 rounded py-1 text-left text-sm focus-visible:outline-2 focus-visible:outline-attic-500"
                 :aria-pressed="active === row.asset.id"
-                :aria-label="`Browse ${row.asset.name}`"
+                :aria-label="t('assets.contentsBrowser.browse', { name: row.asset.name })"
                 @click="select(row.asset)"
               >
                 <UIcon
@@ -358,19 +359,19 @@ function price(asset: Asset) {
               role="status"
               class="px-3 py-2 text-xs text-muted"
             >
-              Loading {{ row.asset.name }}…
+              {{ t('assets.contentsBrowser.loadingNamed', { name: row.asset.name }) }}
             </div>
             <div
               v-if="row.footer && expanded.has(row.asset.id) && branches[row.asset.id]?.error"
               role="alert"
               class="px-3 py-2 text-xs"
             >
-              Could not load {{ row.asset.name }}. <UButton
+              {{ t('assets.contentsBrowser.loadNamedFailed', { name: row.asset.name }) }} <UButton
                 variant="link"
                 size="xs"
                 @click="loadBranch(row.asset.id, (branches[row.asset.id]?.offset || 0) > 0)"
               >
-                Retry
+                {{ t('assets.contentsBrowser.retry') }}
               </UButton>
             </div>
             <UButton
@@ -378,10 +379,10 @@ function price(asset: Asset) {
               variant="link"
               size="xs"
               :loading="branches[row.asset.id]?.loading"
-              :aria-label="`Load more contents of ${row.asset.name}`"
+              :aria-label="t('assets.contentsBrowser.loadMoreContentsOf', { name: row.asset.name })"
               @click="loadBranch(row.asset.id, true)"
             >
-              Load more in {{ row.asset.name }}
+              {{ t('assets.contentsBrowser.loadMoreIn', { name: row.asset.name }) }}
             </UButton>
           </template>
         </div>
@@ -389,7 +390,7 @@ function price(asset: Asset) {
       <div class="min-w-0 space-y-4 p-4 sm:p-5">
         <nav
           v-if="active !== asset.id"
-          aria-label="Contents path"
+          :aria-label="t('assets.contentsBrowser.path')"
           class="flex flex-wrap items-center gap-1 text-xs text-muted"
         >
           <template
@@ -416,7 +417,7 @@ function price(asset: Asset) {
         >
           <AssetPicker
             v-model="selected"
-            label="Content asset"
+            :label="t('assets.contentsBrowser.contentAsset')"
             :exclude-ancestors-of="active"
             @resolved="selectedAsset = $event"
           />
@@ -426,13 +427,13 @@ function price(asset: Asset) {
               :loading="linking"
               @click="link"
             >
-              Link asset
+              {{ t('assets.contentsBrowser.linkAsset') }}
             </UButton><UButton
               variant="ghost"
               :disabled="linking"
               @click="pickerOpen = false; selected = null; selectedAsset = null"
             >
-              Cancel
+              {{ t('assets.contentsBrowser.cancel') }}
             </UButton>
           </div>
         </div>
@@ -440,33 +441,33 @@ function price(asset: Asset) {
           v-if="!rootEmpty"
           class="flex flex-wrap items-center gap-3 rounded-xl bg-mist-50 p-3 dark:bg-mist-800/50"
         >
-          <label class="min-w-40 flex-1"><span class="sr-only">Search these contents</span><input
+          <label class="min-w-40 flex-1"><span class="sr-only">{{ t('assets.contentsBrowser.searchLabel') }}</span><input
             v-model="query"
             type="search"
-            placeholder="Search these contents…"
+            :placeholder="t('assets.contentsBrowser.searchPlaceholder')"
             class="w-full rounded-lg border border-mist-200 bg-white px-3 py-2 text-sm focus-visible:outline-attic-500 dark:border-mist-600 dark:bg-mist-900"
           ></label>
           <label class="flex items-center gap-2 text-xs"><input
             v-model="nested"
             type="checkbox"
             class="accent-attic-500"
-          >Include nested contents</label>
+          >{{ t('assets.contentsBrowser.includeNested') }}</label>
           <div
             class="flex gap-1"
-            aria-label="Results layout"
+            :aria-label="t('assets.contentsBrowser.layout')"
           >
             <UButton
               icon="i-lucide-layout-grid"
               size="sm"
               :variant="view === 'grid' ? 'soft' : 'ghost'"
-              aria-label="Grid view"
+              :aria-label="t('assets.contentsBrowser.gridView')"
               :aria-pressed="view === 'grid'"
               @click="view = 'grid'"
             /><UButton
               icon="i-lucide-list"
               size="sm"
               :variant="view === 'list' ? 'soft' : 'ghost'"
-              aria-label="List view"
+              :aria-label="t('assets.contentsBrowser.listView')"
               :aria-pressed="view === 'list'"
               @click="view = 'list'"
             />
@@ -477,18 +478,18 @@ function price(asset: Asset) {
           role="status"
           class="py-8 text-center text-sm text-muted"
         >
-          Loading contents…
+          {{ t('assets.contentsBrowser.loading') }}
         </p>
         <div
           v-else-if="failed"
           role="alert"
           class="py-8 text-center"
         >
-          Contents could not be loaded. <UButton
+          {{ t('assets.contentsBrowser.loadError') }} <UButton
             variant="link"
             @click="loadResults"
           >
-            Try again
+            {{ t('common.tryAgain') }}
           </UButton>
         </div>
         <template v-else>
@@ -497,7 +498,7 @@ function price(asset: Asset) {
             class="text-xs text-muted"
             aria-live="polite"
           >
-            {{ results?.total || 0 }} {{ nested ? 'nested' : 'direct' }} {{ results?.total === 1 ? 'asset' : 'assets' }}
+            {{ nested ? t('assets.contentsBrowser.nestedAssets', { count: results?.total || 0 }, results?.total || 0) : t('assets.contentsBrowser.directAssets', { count: results?.total || 0 }, results?.total || 0) }}
           </p>
           <div
             v-if="!results?.total"
@@ -507,22 +508,22 @@ function price(asset: Asset) {
               name="i-lucide-package-open"
               class="mb-2 size-6 text-muted"
             /><h4 class="font-bold">
-              {{ query.trim() ? 'No matching assets' : 'No contents yet' }}
+              {{ query.trim() ? t('assets.contentsBrowser.noMatches') : t('assets.contentsBrowser.noContents') }}
             </h4><p class="mt-1 text-sm text-muted">
-              {{ query.trim() ? 'Try another search or include nested contents.' : `Add a new asset or link an existing one inside ${current.name}.` }}
+              {{ query.trim() ? t('assets.contentsBrowser.tryAnother') : t('assets.contentsBrowser.addInside', { name: current.name }) }}
             </p><UButton
               v-if="query.trim()"
               class="mt-3"
               variant="soft"
               @click="query = ''"
             >
-              Clear search
+              {{ t('assets.contentsBrowser.clearSearch') }}
             </UButton>
           </div>
           <ul
             v-else
             :class="view === 'grid' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2'"
-            aria-label="Asset results"
+            :aria-label="t('assets.contentsBrowser.results')"
           >
             <li
               v-for="child in results?.assets"
@@ -536,12 +537,12 @@ function price(asset: Asset) {
                 class="h-full"
               >
                 <template #metadata>
-                  <p>Qty {{ child.quantity }}</p>
+                  <p>{{ t('assets.contentsBrowser.qty', { count: child.quantity }) }}</p>
                   <p
                     v-if="nested && child.containment_path?.length"
                     class="break-words"
                   >
-                    Inside {{ child.containment_path.map(item => item.name).join(' › ') }}
+                    {{ t('assets.contentsBrowser.insidePath', { path: child.containment_path.map(item => item.name).join(' › ') }) }}
                   </p>
                 </template>
                 <template
@@ -551,10 +552,10 @@ function price(asset: Asset) {
                   <UButton
                     size="xs"
                     variant="link"
-                    :aria-label="`Browse contents of ${child.name}`"
+                    :aria-label="t('assets.contentsBrowser.browseContentsOf', { name: child.name })"
                     @click="select(child)"
                   >
-                    {{ child.child_count }} inside <UIcon name="i-lucide-arrow-right" />
+                    {{ t('assets.contentsBrowser.insideCount', { count: child.child_count }) }} <UIcon name="i-lucide-arrow-right" />
                   </UButton>
                 </template>
               </AssetCard>
@@ -569,13 +570,13 @@ function price(asset: Asset) {
               :disabled="offset === 0"
               @click="offset -= pageSize"
             >
-              Previous contents
-            </UButton><span class="text-xs text-muted">{{ offset + 1 }}–{{ Math.min(offset + pageSize, results?.total || 0) }} of {{ results?.total }}</span><UButton
+              {{ t('assets.contentsBrowser.previous') }}
+            </UButton><span class="text-xs text-muted">{{ t('assets.contentsBrowser.range', { from: offset + 1, to: Math.min(offset + pageSize, results?.total || 0), total: results?.total }) }}</span><UButton
               variant="ghost"
               :disabled="offset + pageSize >= (results?.total || 0)"
               @click="offset += pageSize"
             >
-              Next contents
+              {{ t('assets.contentsBrowser.next') }}
             </UButton>
           </div>
         </template>

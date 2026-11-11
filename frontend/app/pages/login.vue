@@ -4,6 +4,7 @@ definePageMeta({
 })
 
 const route = useRoute()
+const { t } = useI18n()
 const { isAuthenticated, isOIDCEnabled, isOIDCAutoRedirectEnabled, loginWithCredentials, loginWithOIDC, fetchSession, loading } = useAuth()
 
 const email = ref('')
@@ -38,7 +39,7 @@ const handleLogin = async () => {
   const result = await loginWithCredentials({ email: email.value, password: password.value })
 
   if (!result.success) {
-    error.value = result.error || 'Login failed'
+    error.value = result.error || t('login.failed')
   }
 
   isLoading.value = false
@@ -52,6 +53,9 @@ const handleOIDCLogin = () => {
 <template>
   <div class="min-h-screen flex items-center justify-center bg-primary-600 dark:bg-primary-800 p-6">
     <div class="w-full max-w-md">
+      <div class="mb-4 flex justify-end">
+        <LanguageSwitcher />
+      </div>
       <!-- Branding -->
       <div class="text-center mb-8">
         <UIcon
@@ -62,7 +66,7 @@ const handleOIDCLogin = () => {
           Attic
         </h1>
         <p class="text-primary-100">
-          Your home inventory
+          {{ t('login.tagline') }}
         </p>
       </div>
 
@@ -90,7 +94,7 @@ const handleOIDCLogin = () => {
               icon="i-lucide-log-in"
               @click="handleOIDCLogin"
             >
-              Sign in with SSO
+              {{ t('login.sso') }}
             </UButton>
           </div>
 
@@ -108,13 +112,13 @@ const handleOIDCLogin = () => {
             />
 
             <UFormField
-              label="Email"
+              :label="t('login.email')"
               name="email"
             >
               <UInput
                 v-model="email"
                 type="text"
-                placeholder="Enter your email"
+                :placeholder="t('login.emailPlaceholder')"
                 icon="i-lucide-mail"
                 size="xl"
                 autocomplete="username"
@@ -124,13 +128,13 @@ const handleOIDCLogin = () => {
             </UFormField>
 
             <UFormField
-              label="Password"
+              :label="t('login.password')"
               name="password"
             >
               <UInput
                 v-model="password"
                 type="password"
-                placeholder="Enter your password"
+                :placeholder="t('login.passwordPlaceholder')"
                 icon="i-lucide-lock"
                 size="xl"
                 autocomplete="current-password"
@@ -147,14 +151,14 @@ const handleOIDCLogin = () => {
               :loading="isLoading"
               :disabled="isLoading || !email || !password"
             >
-              Sign in
+              {{ t('login.signIn') }}
             </UButton>
           </form>
         </template>
       </UCard>
 
       <p class="text-center text-sm text-primary-200 mt-8">
-        Powered by Attic
+        {{ t('login.poweredBy') }}
       </p>
     </div>
   </div>

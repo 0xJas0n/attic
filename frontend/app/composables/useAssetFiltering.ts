@@ -9,6 +9,7 @@ export function useAssetFiltering(filters: AssetFilters) {
   const structured = ref(false)
   const selected = ref<SavedFilter>()
   const selectedId = ref<string>()
+  const { t } = useI18n()
   const message = ref('')
   const issues = ref<FilterIssue[]>([])
   const busy = ref(false)
@@ -86,7 +87,7 @@ export function useAssetFiltering(filters: AssetFilters) {
       if (replace) apply(saved.criteria)
       if (!modified.value) {
         issues.value = saved.issues || []
-        if (issues.value.length) message.value = 'This saved search needs repair. Open the search builder to fix the listed rules.'
+        if (issues.value.length) message.value = t('assets.filters.needsRepair')
       }
     } catch (error) {
       if (request !== generation) return

@@ -16,6 +16,7 @@ type TimelineEntry = {
   custom?: AssetEvent
 }
 
+const { t, locale } = useI18n()
 const apiFetch = useApiFetch()
 const toast = useToast()
 const eventsUrl = computed(() => `/api/assets/${props.assetId}/events`)
@@ -49,11 +50,11 @@ const timeline = computed<TimelineEntry[]>(() => {
     custom: event
   }))
   entries.push({
-    id: 'system-updated', title: 'Last Updated', description: 'Asset details were modified.',
+    id: 'system-updated', title: t('assets.history.lastUpdated'), description: t('assets.history.lastUpdatedDescription'),
     icon: 'i-lucide-pencil', timestamp: props.updatedAt
   })
   entries.push({
-    id: 'system-created', title: 'Asset Created', description: 'Initial entry created.',
+    id: 'system-created', title: t('assets.history.created'), description: t('assets.history.createdDescription'),
     icon: 'i-lucide-package-plus', timestamp: props.createdAt
   })
   return entries.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)
@@ -88,12 +89,12 @@ function openEdit(event: AssetEvent) {
 function eventActions(event: AssetEvent) {
   return [
     {
-      label: 'Edit',
+      label: t('assets.history.edit'),
       icon: 'i-lucide-pencil',
       onSelect: () => openEdit(event)
     },
     {
-      label: 'Delete',
+      label: t('assets.history.delete'),
       icon: 'i-lucide-trash-2',
       color: 'error' as const,
       onSelect: () => { deleting.value = event }
@@ -105,12 +106,12 @@ function eventActions(event: AssetEvent) {
 async function save() {
   formError.value = ''
   if (!form.title.trim()) {
-    formError.value = 'Title is required.'
+    formError.value = t('assets.history.titleRequired')
     return
   }
   const occurredAt = new Date(form.occurred_at)
   if (!form.occurred_at || Number.isNaN(occurredAt.getTime())) {
-    formError.value = 'Date and time are required.'
+    formError.value = t('assets.history.dateRequired')
     return
   }
   busy.value = true
@@ -125,11 +126,11 @@ async function save() {
         occurred_at: occurredAt.toISOString()
       })
     })
-    toast.add({ title: editing.value ? 'Event updated' : 'Event added', color: 'success' })
+    toast.add({ title: editing.value ? t('assets.history.updated') : t('assets.history.added'), color: 'success' })
     modalOpen.value = false
     await refresh()
   } catch (error) {
-    formError.value = apiErrorMessage(error, 'Failed to save event')
+    formError.value = apiErrorMessage(error, t('assets.history.saveFailed'))
   } finally {
     busy.value = false
   }
@@ -141,11 +142,11 @@ async function deleteEvent() {
   busy.value = true
   try {
     await apiFetch(`${eventsUrl.value}/${deleting.value.id}`, { method: 'DELETE' })
-    toast.add({ title: 'Event deleted', color: 'success' })
+    toast.add({ title: t('assets.history.deleted'), color: 'success' })
     deleting.value = null
     await refresh()
   } catch (error) {
-    toast.add({ title: apiErrorMessage(error, 'Failed to delete event'), color: 'error' })
+    toast.add({ title: apiErrorMessage(error, t('assets.history.deleteFailed')), color: 'error' })
   } finally {
     busy.value = false
   }
@@ -153,7 +154,7 @@ async function deleteEvent() {
 
 /** Formats an event instant in the viewer's local timezone. */
 function formatTimestamp(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale.value, {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
   }).format(new Date(value))
 }
@@ -180,7 +181,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   <section class="space-y-3 pb-6">
     <div class="flex items-center justify-between px-1">
       <h3 class="text-base font-extrabold text-mist-950 dark:text-white">
-        Asset History
+        {{ t('assets.history.title') }}
       </h3>
       <UButton
         icon="i-lucide-plus"
@@ -188,7 +189,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
         size="sm"
         @click="openCreate"
       >
-        Add event
+        {{ t('assets.history.addEvent') }}
       </UButton>
     </div>
     <div class="attic-panel overflow-hidden rounded-[20px]">
@@ -224,7 +225,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
               :items="eventActions(entry.custom)"
             >
               <UButton
-                :aria-label="`Actions for ${entry.title}`"
+                :aria-label="t('assets.history.actionsFor', { title: entry.title })"
                 icon="i-lucide-ellipsis"
                 variant="ghost"
                 color="neutral"
@@ -233,7 +234,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
             </UDropdownMenu>
             <UButton
               v-else
-              :aria-label="`No actions available for ${entry.title}`"
+              :aria-label="t('assets.history.noActionsFor', { title: entry.title })"
               icon="i-lucide-ellipsis"
               variant="ghost"
               color="neutral"
@@ -247,8 +248,8 @@ function apiErrorMessage(error: unknown, fallback: string): string {
 
     <UModal
       v-model:open="modalOpen"
-      :title="editing ? 'Edit event' : 'Add event'"
-      description="Record a milestone in this asset's history."
+      :title="editing ? t('assets.history.editEvent') : t('assets.history.addEvent')"
+      :description="t('assets.history.modalDescription')"
     >
       <template #content>
         <form
@@ -256,7 +257,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
           @submit.prevent="save"
         >
           <UFormField
-            label="Title"
+            :label="t('assets.history.fieldTitle')"
             required
           >
             <UInput
@@ -267,7 +268,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
             />
           </UFormField>
           <UFormField
-            label="Description"
+            :label="t('assets.history.fieldDescription')"
           >
             <UTextarea
               v-model="form.description"
@@ -277,7 +278,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
             />
           </UFormField>
           <UFormField
-            label="Date and time"
+            :label="t('assets.history.fieldDateTime')"
             required
           >
             <UInput
@@ -302,13 +303,13 @@ function apiErrorMessage(error: unknown, fallback: string): string {
               :disabled="busy"
               @click="modalOpen = false"
             >
-              Cancel
+              {{ t('assets.history.cancel') }}
             </UButton>
             <UButton
               type="submit"
               :loading="busy"
             >
-              {{ editing ? 'Save changes' : 'Add event' }}
+              {{ editing ? t('assets.history.saveChanges') : t('assets.history.addEvent') }}
             </UButton>
           </div>
         </form>
@@ -317,12 +318,19 @@ function apiErrorMessage(error: unknown, fallback: string): string {
 
     <UModal
       v-model:open="deletingOpen"
-      title="Delete event"
-      description="This action cannot be undone."
+      :title="t('assets.history.deleteEvent')"
+      :description="t('assets.history.cannotUndo')"
     >
       <template #content>
         <div class="w-full max-w-md space-y-5 rounded-[20px] bg-white p-6 shadow-xl dark:bg-mist-800">
-          <p>Delete <strong>{{ deleting?.title }}</strong> from this asset's history?</p>
+          <i18n-t
+            keypath="assets.history.deleteConfirm"
+            tag="p"
+          >
+            <template #title>
+              <strong>{{ deleting?.title }}</strong>
+            </template>
+          </i18n-t>
           <div class="flex justify-end gap-2">
             <UButton
               color="neutral"
@@ -330,14 +338,14 @@ function apiErrorMessage(error: unknown, fallback: string): string {
               :disabled="busy"
               @click="deleting = null"
             >
-              Cancel
+              {{ t('assets.history.cancel') }}
             </UButton>
             <UButton
               color="error"
               :loading="busy"
               @click="deleteEvent"
             >
-              Delete event
+              {{ t('assets.history.deleteEvent') }}
             </UButton>
           </div>
         </div>

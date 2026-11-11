@@ -358,7 +358,7 @@ describe('Asset containment', () => {
     await wrapper.get('#asset-name').setValue('Component')
     await wrapper.get('form').trigger('submit')
     expect(saves).toHaveLength(0)
-    await wrapper.findAll('button').find(button => button.text() === 'Clear inside')!.trigger('click')
+    await wrapper.findAll('button').find(button => button.text() === 'Clear Inside')!.trigger('click')
     await wrapper.get('form').trigger('submit')
     await settle(() => expect(saves).toHaveLength(1))
     expect(saves[0]?.body.parent_id).toBeNull()

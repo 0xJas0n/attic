@@ -8,6 +8,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 const toast = useToast()
 const apiFetch = useApiFetch()
 const { features } = useFeatures()
@@ -50,7 +51,7 @@ function getAttributeValue(key: string): string {
     const label = (v: unknown) => definition.options?.find(o => o.value === v)?.label || String(v)
     return Array.isArray(value) ? value.map(label).join(', ') || '-' : label(value)
   }
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'boolean') return value ? t('assets.detail.yes') : t('assets.detail.no')
   return String(value)
 }
 
@@ -63,10 +64,10 @@ async function detachAsset() {
   try {
     await apiFetch(`/api/assets/${route.params.id}/parent`, { method: 'PATCH', body: JSON.stringify({ parent_id: null }) })
     await refreshAsset()
-    toast.add({ title: 'Asset detached', color: 'success' })
+    toast.add({ title: t('assets.detail.detached'), color: 'success' })
   } catch (err: unknown) {
     const failure = err as { data?: { error?: string } }
-    toast.add({ title: failure.data?.error || 'Failed to detach asset', color: 'error' })
+    toast.add({ title: failure.data?.error || t('assets.detail.detachFailed'), color: 'error' })
   } finally { detaching.value = false }
 }
 const config = useRuntimeConfig()
@@ -120,24 +121,24 @@ async function saveWarranty() {
         notes: warrantyForm.notes || undefined
       })
     })
-    toast.add({ title: 'Warranty saved', color: 'success' })
+    toast.add({ title: t('assets.detail.warrantySaved'), color: 'success' })
     warrantyModalOpen.value = false
     refreshWarranty()
   } catch {
-    toast.add({ title: 'Failed to save warranty', color: 'error' })
+    toast.add({ title: t('assets.detail.warrantySaveFailed'), color: 'error' })
   }
 }
 
 async function deleteWarranty() {
-  if (!confirm('Delete warranty information?')) return
+  if (!confirm(t('assets.detail.confirmDeleteWarranty'))) return
   try {
     await apiFetch(`/api/assets/${route.params.id}/warranty`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Warranty deleted', color: 'success' })
+    toast.add({ title: t('assets.detail.warrantyDeleted'), color: 'success' })
     refreshWarranty()
   } catch {
-    toast.add({ title: 'Failed to delete warranty', color: 'error' })
+    toast.add({ title: t('assets.detail.warrantyDeleteFailed'), color: 'error' })
   }
 }
 
@@ -146,10 +147,10 @@ async function deleteAsset() {
     await apiFetch(`/api/assets/${route.params.id}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Asset deleted', color: 'success' })
+    toast.add({ title: t('assets.detail.deleted'), color: 'success' })
     router.push('/assets')
   } catch {
-    toast.add({ title: 'Failed to delete asset', color: 'error' })
+    toast.add({ title: t('assets.detail.deleteFailed'), color: 'error' })
   }
 }
 
@@ -160,24 +161,24 @@ async function downloadAttachment(attachment: Attachment) {
       window.open(response.url, '_blank')
     }
   } catch {
-    toast.add({ title: 'Failed to get download link', color: 'error' })
+    toast.add({ title: t('assets.detail.downloadFailed'), color: 'error' })
   }
 }
 
 async function deleteAttachment(attachment: Attachment) {
-  if (!confirm(`Delete "${attachment.file_name}"?`)) return
+  if (!confirm(t('assets.detail.confirmDeleteAttachment', { name: attachment.file_name }))) return
   try {
     await apiFetch(`/api/attachments/${attachment.id}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Attachment deleted', color: 'success' })
+    toast.add({ title: t('assets.detail.attachmentDeleted'), color: 'success' })
     refreshAttachments()
     // Refresh asset in case we deleted the main image
     if (asset.value?.main_attachment_id === attachment.id) {
       refreshAsset()
     }
   } catch {
-    toast.add({ title: 'Failed to delete attachment', color: 'error' })
+    toast.add({ title: t('assets.detail.attachmentDeleteFailed'), color: 'error' })
   }
 }
 
@@ -218,7 +219,7 @@ const imageGallery = computed(() => {
     } else {
       images.unshift({
         id: mainImageId || 'main-image',
-        name: asset.value?.main_attachment?.file_name || `${asset.value?.name} image`,
+        name: asset.value?.main_attachment?.file_name || t('assets.detail.imageOf', { name: asset.value?.name }),
         url: mainImageUrl
       })
     }
@@ -290,10 +291,10 @@ async function setMainImage(attachment: Attachment) {
     await apiFetch(`/api/assets/${route.params.id}/main-image/${attachment.id}`, {
       method: 'PUT'
     })
-    toast.add({ title: 'Main image updated', color: 'success' })
+    toast.add({ title: t('assets.detail.mainImageUpdated'), color: 'success' })
     refreshAsset()
   } catch {
-    toast.add({ title: 'Failed to set main image', color: 'error' })
+    toast.add({ title: t('assets.detail.mainImageFailed'), color: 'error' })
   }
 }
 
@@ -303,10 +304,10 @@ async function clearMainImage() {
     await apiFetch(`/api/assets/${route.params.id}/main-image`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Main image cleared', color: 'success' })
+    toast.add({ title: t('assets.detail.mainImageCleared'), color: 'success' })
     refreshAsset()
   } catch {
-    toast.add({ title: 'Failed to clear main image', color: 'error' })
+    toast.add({ title: t('assets.detail.mainImageClearFailed'), color: 'error' })
   }
 }
 
@@ -349,16 +350,16 @@ async function uploadFiles(files: File[]) {
     }
 
     toast.add({
-      title: succeeded > 1 ? `${succeeded} files uploaded` : 'File uploaded',
+      title: succeeded > 1 ? t('assets.detail.filesUploaded', { count: succeeded }) : t('assets.detail.fileUploaded'),
       color: 'success'
     })
   } catch {
     const remaining = files.slice(index)
     if (succeeded === 0) {
-      toast.add({ title: 'Failed to upload file', color: 'error' })
+      toast.add({ title: t('assets.detail.uploadFailed'), color: 'error' })
     } else {
       toast.add({
-        title: `Uploaded ${succeeded} of ${files.length} files`,
+        title: t('assets.detail.partialUpload', { done: succeeded, total: files.length }),
         color: 'warning'
       })
     }
@@ -423,7 +424,7 @@ function onDrop(event: DragEvent) {
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString(locale.value, {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
@@ -455,9 +456,9 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
   if (!warranty.value?.end_date) return null
   const days = daysUntilExpiry(warranty.value.end_date)
   if (days === null) return null
-  if (days < 0) return { color: 'error', text: 'Expired' }
-  if (days <= 30) return { color: 'warning', text: `${days} days left` }
-  return { color: 'success', text: `${days} days left` }
+  if (days < 0) return { color: 'error', text: t('assets.detail.expired') }
+  if (days <= 30) return { color: 'warning', text: t('assets.detail.daysLeft', { count: days }, days) }
+  return { color: 'success', text: t('assets.detail.daysLeft', { count: days }, days) }
 })
 </script>
 
@@ -469,7 +470,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
         to="/"
         class="hover:text-attic-500 transition-colors"
       >
-        Home
+        {{ t('assets.detail.home') }}
       </NuxtLink>
       <UIcon
         name="i-lucide-chevron-right"
@@ -479,13 +480,13 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
         to="/assets"
         class="hover:text-attic-500 transition-colors"
       >
-        Assets
+        {{ t('assets.detail.assets') }}
       </NuxtLink>
       <UIcon
         name="i-lucide-chevron-right"
         class="w-4 h-4"
       />
-      <span class="text-mist-950 dark:text-white">{{ asset?.name || 'Loading...' }}</span>
+      <span class="text-mist-950 dark:text-white">{{ asset?.name || t('assets.detail.loadingShort') }}</span>
     </nav>
 
     <div
@@ -501,7 +502,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 v-if="features.categories"
                 class="rounded-full bg-attic-50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-attic-600 ring-1 ring-attic-100 dark:bg-attic-500/10 dark:text-attic-300 dark:ring-attic-500/20"
               >
-                {{ asset.category?.name || 'Uncategorized' }}
+                {{ asset.category?.name || t('assets.detail.uncategorized') }}
               </span>
               <span
                 v-if="features.conditions && asset.condition?.label"
@@ -519,27 +520,27 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               class="rounded-xl font-bold"
               icon="i-lucide-pencil"
             >
-              Edit Asset
+              {{ t('assets.detail.editAsset') }}
             </UButton>
             <UButton
               color="error"
               variant="ghost"
               icon="i-lucide-trash-2"
-              :aria-label="`Delete ${asset.name}`"
-              :title="`Delete ${asset.name}`"
+              :aria-label="t('assets.detail.deleteNamed', { name: asset.name })"
+              :title="t('assets.detail.deleteNamed', { name: asset.name })"
               @click="deleteModalOpen = true"
             >
-              Delete
+              {{ t('assets.detail.delete') }}
             </UButton>
           </div>
         </div>
 
         <section
           v-if="asset.parent"
-          aria-label="Inside"
+          :aria-label="t('assets.picker.inside')"
           class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
         >
-          <span class="text-muted">Inside</span>
+          <span class="text-muted">{{ t('assets.picker.inside') }}</span>
           <NuxtLink
             :to="`/assets/${asset.parent.id}`"
             class="min-w-0 break-words font-semibold text-attic-500 hover:underline"
@@ -553,13 +554,13 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
             :disabled="detaching"
             @click="detachAsset"
           >
-            Detach
+            {{ t('assets.detail.detach') }}
           </UButton>
         </section>
         <div
           v-if="features.collections && asset.collections?.length"
           class="flex flex-wrap gap-2"
-          aria-label="Collections"
+          :aria-label="t('assets.detail.collections')"
         >
           <UButton
             v-for="collection in asset.collections"
@@ -575,7 +576,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
         <div
           v-if="features.tags && asset.tags?.length"
           class="flex flex-wrap gap-2"
-          aria-label="Tags"
+          :aria-label="t('assets.detail.tags')"
         >
           <UButton
             v-for="tag in asset.tags"
@@ -601,7 +602,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               v-if="asset.main_attachment_url"
               type="button"
               class="h-full w-full cursor-zoom-in"
-              :aria-label="`View ${asset.name} image gallery`"
+              :aria-label="t('assets.detail.viewGallery', { name: asset.name })"
               @click="openImageViewer(asset.main_attachment_id)"
             >
               <img
@@ -619,7 +620,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 class="size-8 text-mist-300 dark:text-mist-600 lg:size-10"
               />
               <p class="text-sm text-gray-400">
-                No image available
+                {{ t('assets.detail.noImage') }}
               </p>
             </div>
           </div>
@@ -627,7 +628,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
           <button
             v-if="asset.main_attachment_url"
             class="absolute right-3 top-3 rounded-xl bg-black/50 p-2 text-white opacity-100 transition-opacity hover:bg-black/70 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
-            title="Remove main image"
+            :title="t('assets.detail.removeMainImage')"
             @click.stop="clearMainImage"
           >
             <UIcon
@@ -640,25 +641,25 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
         <div class="min-w-0 space-y-6">
           <section
             v-if="asset.description"
-            aria-label="Description"
+            :aria-label="t('assets.detail.description')"
             class="attic-panel overflow-hidden rounded-[20px]"
           >
             <h2 class="border-b border-mist-100 bg-mist-50/60 px-4 py-3.5 text-base font-bold text-default dark:border-mist-700 dark:bg-mist-800/50 sm:px-5">
-              Description
+              {{ t('assets.detail.description') }}
             </h2>
             <p class="whitespace-pre-wrap break-words px-4 py-4 text-sm leading-relaxed text-mist-700 dark:text-mist-300 sm:px-5">
               {{ asset.description }}
             </p>
           </section>
           <section
-            aria-label="Asset Details"
+            :aria-label="t('assets.detail.details')"
             class="attic-panel overflow-hidden rounded-[20px]"
           >
             <h2 class="flex items-center gap-2 border-b border-mist-100 bg-mist-50/60 px-4 py-3.5 text-base font-bold text-default dark:border-mist-700 dark:bg-mist-800/50 sm:px-5">
               <UIcon
                 name="i-lucide-clipboard-list"
                 class="size-4 text-attic-500"
-              />Asset details
+              />{{ t('assets.detail.details') }}
             </h2>
             <dl class="grid grid-cols-2 gap-x-6 gap-y-5 p-4 sm:grid-cols-3 sm:p-5">
               <div
@@ -666,10 +667,10 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 class="min-w-0"
               >
                 <dt class="text-xs text-muted">
-                  Location
+                  {{ t('assets.detail.location') }}
                 </dt>
                 <dd class="mt-1 break-words text-sm font-semibold text-default">
-                  {{ asset.location?.name || 'Not assigned' }}
+                  {{ asset.location?.name || t('assets.detail.notAssigned') }}
                 </dd>
               </div>
               <div
@@ -677,15 +678,15 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 class="min-w-0"
               >
                 <dt class="text-xs text-muted">
-                  Condition
+                  {{ t('assets.detail.condition') }}
                 </dt>
                 <dd class="mt-1 break-words text-sm font-semibold text-default">
-                  {{ asset.condition?.label || 'Not specified' }}
+                  {{ asset.condition?.label || t('assets.detail.notSpecified') }}
                 </dd>
               </div>
               <div>
                 <dt class="text-xs text-muted">
-                  Quantity
+                  {{ t('assets.detail.quantity') }}
                 </dt>
                 <dd class="mt-1 text-sm font-semibold text-default">
                   {{ asset.quantity }}
@@ -693,15 +694,15 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               </div>
               <div>
                 <dt class="text-xs text-muted">
-                  Unit purchase price
+                  {{ t('assets.detail.unitPrice') }}
                 </dt>
                 <dd class="mt-1 text-sm font-semibold tabular-nums text-default">
-                  {{ asset.purchase_price == null ? 'Not priced' : formatCurrency(asset.purchase_price) }}
+                  {{ asset.purchase_price == null ? t('assets.detail.notPriced') : formatCurrency(asset.purchase_price) }}
                 </dd>
               </div>
               <div>
                 <dt class="text-xs text-muted">
-                  Purchase date
+                  {{ t('assets.detail.purchaseDate') }}
                 </dt>
                 <dd class="mt-1 text-sm font-semibold text-default">
                   {{ formatDate(asset.purchase_at) }}
@@ -709,7 +710,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               </div>
               <div>
                 <dt class="text-xs text-muted">
-                  Created
+                  {{ t('assets.detail.created') }}
                 </dt>
                 <dd class="mt-1 text-sm font-semibold text-default">
                   {{ formatDate(asset.created_at) }}
@@ -729,7 +730,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
         <!-- Personal Notes (if present) -->
         <section
           v-if="asset.notes"
-          aria-label="Personal Notes"
+          :aria-label="t('assets.detail.personalNotes')"
           class="attic-panel overflow-hidden rounded-[20px]"
         >
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-mist-100 bg-mist-50/60 px-4 py-3.5 dark:border-mist-700 dark:bg-mist-800/50 sm:px-5">
@@ -739,7 +740,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 class="size-5 text-attic-500"
                 aria-hidden="true"
               />
-              Personal Notes
+              {{ t('assets.detail.personalNotes') }}
             </h3>
             <NuxtLink
               :to="`/assets/${route.params.id}/edit`"
@@ -749,7 +750,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 name="i-lucide-edit"
                 class="w-4 h-4"
               />
-              Edit Notes
+              {{ t('assets.detail.editNotes') }}
             </NuxtLink>
           </div>
           <div class="bg-terracotta-50/50 px-4 py-4 dark:bg-terracotta-950/10 sm:px-5">
@@ -770,10 +771,10 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 name="i-lucide-sliders-horizontal"
                 class="w-5 h-5 text-attic-500"
               />
-              {{ categoryWithAttrs.name }} Attributes
+              {{ t('assets.detail.categoryAttributes', { name: categoryWithAttrs.name }) }}
             </h3>
             <span class="text-[10px] px-2 py-0.5 bg-attic-500/10 text-attic-500 rounded-full font-bold uppercase tracking-widest">
-              Custom Data
+              {{ t('assets.detail.customData') }}
             </span>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 divide-y divide-x-0 md:divide-x md:divide-y-0 divide-gray-100 dark:divide-gray-700">
@@ -825,7 +826,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 name="i-lucide-shield-check"
                 class="w-5 h-5 text-attic-500"
               />
-              Warranty Information
+              {{ t('assets.detail.warrantyInfo') }}
             </h3>
             <button
               class="text-attic-500 text-sm font-bold hover:underline flex items-center gap-1"
@@ -835,28 +836,28 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 :name="warranty ? 'i-lucide-pencil' : 'i-lucide-plus'"
                 class="w-4 h-4"
               />
-              {{ warranty ? 'Edit' : 'Add Warranty' }}
+              {{ warranty ? t('assets.detail.edit') : t('assets.detail.addWarranty') }}
             </button>
           </div>
           <div v-if="warranty">
             <div class="grid grid-cols-1 md:grid-cols-2 divide-y divide-x-0 md:divide-x md:divide-y-0 divide-gray-100 dark:divide-gray-700">
               <div class="divide-y divide-gray-100 dark:divide-gray-700">
                 <div class="p-5 flex justify-between items-center">
-                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Provider</span>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('assets.detail.provider') }}</span>
                   <span class="text-sm font-bold text-mist-950 dark:text-white">{{ warranty.provider || '-' }}</span>
                 </div>
                 <div class="p-5 flex justify-between items-center">
-                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Policy Number</span>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('assets.detail.policyNumber') }}</span>
                   <span class="text-sm font-bold font-mono text-mist-950 dark:text-white">{{ warranty.policy_number || '-' }}</span>
                 </div>
               </div>
               <div class="divide-y divide-gray-100 dark:divide-gray-700">
                 <div class="p-5 flex justify-between items-center">
-                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Start Date</span>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('assets.detail.startDate') }}</span>
                   <span class="text-sm font-bold text-mist-950 dark:text-white">{{ formatDate(warranty.start_date) }}</span>
                 </div>
                 <div class="p-5 flex justify-between items-center">
-                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">End Date</span>
+                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('assets.detail.endDate') }}</span>
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-bold text-mist-950 dark:text-white">{{ formatDate(warranty.end_date) }}</span>
                     <UBadge
@@ -874,7 +875,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               v-if="warranty.notes"
               class="p-5 border-t border-gray-100 dark:border-gray-700"
             >
-              <span class="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">Notes</span>
+              <span class="text-sm font-medium text-gray-500 dark:text-gray-400 block mb-1">{{ t('assets.detail.notes') }}</span>
               <p class="text-sm text-mist-950 dark:text-white">
                 {{ warranty.notes }}
               </p>
@@ -889,14 +890,14 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3"
             />
             <p class="text-gray-500 dark:text-gray-400 mb-4">
-              No warranty information
+              {{ t('assets.detail.noWarranty') }}
             </p>
             <UButton
               variant="soft"
               size="sm"
               @click="openWarrantyModal"
             >
-              Add Warranty
+              {{ t('assets.detail.addWarranty') }}
             </UButton>
           </div>
         </section>
@@ -919,7 +920,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 name="i-lucide-upload"
                 class="w-4 h-4"
               />
-              Drop files to upload
+              {{ t('assets.detail.dropFiles') }}
             </div>
           </div>
           <div class="flex items-center justify-between border-b border-mist-100 bg-mist-50/60 px-5 py-3.5 dark:border-mist-700 dark:bg-mist-800/50">
@@ -928,7 +929,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 name="i-lucide-paperclip"
                 class="w-5 h-5 text-attic-500"
               />
-              Attachments
+              {{ t('assets.detail.attachments') }}
             </h3>
             <button
               class="text-attic-500 text-sm font-bold hover:underline flex items-center gap-1"
@@ -939,7 +940,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 name="i-lucide-upload"
                 class="w-4 h-4"
               />
-              {{ uploading ? 'Uploading…' : 'Add files' }}
+              {{ uploading ? t('assets.detail.uploading') : t('assets.detail.addFiles') }}
             </button>
             <input
               ref="fileInput"
@@ -954,20 +955,20 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
             class="flex items-center justify-between gap-3 border-b border-terracotta-100 bg-terracotta-50 px-5 py-2.5 dark:border-terracotta-900/40 dark:bg-terracotta-950/10"
           >
             <span class="text-xs font-semibold text-terracotta-700 dark:text-terracotta-300">
-              {{ retryFiles.length }} {{ retryFiles.length > 1 ? 'files' : 'file' }} not uploaded
+              {{ t('assets.detail.notUploaded', { count: retryFiles.length }, retryFiles.length) }}
             </span>
             <div class="flex items-center gap-2">
               <button
                 class="text-xs font-bold text-terracotta-700 hover:underline dark:text-terracotta-300"
                 @click="retryUpload"
               >
-                Retry
+                {{ t('assets.detail.retry') }}
               </button>
               <button
                 class="text-xs font-bold text-muted hover:underline"
                 @click="retryFiles = []"
               >
-                Dismiss
+                {{ t('assets.detail.dismiss') }}
               </button>
             </div>
           </div>
@@ -987,7 +988,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                     v-if="isImageAttachment(attachment) && attachmentUrls[attachment.id]"
                     type="button"
                     class="h-full w-full cursor-zoom-in"
-                    :aria-label="`View ${attachment.file_name}`"
+                    :aria-label="t('assets.detail.viewFile', { name: attachment.file_name })"
                     @click="openImageViewer(attachment.id)"
                   >
                     <img
@@ -1012,7 +1013,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                       color="primary"
                       size="xs"
                     >
-                      Main Image
+                      {{ t('assets.detail.mainImage') }}
                     </UBadge>
                   </div>
                   <p class="text-xs text-gray-500">
@@ -1028,7 +1029,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                   color="neutral"
                   icon="i-lucide-image"
                   size="sm"
-                  title="Set as main image"
+                  :title="t('assets.detail.setMainImage')"
                   @click="setMainImage(attachment)"
                 />
                 <UButton
@@ -1064,22 +1065,22 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               </div>
               <div>
                 <p class="text-sm font-bold text-mist-950 dark:text-white">
-                  No attachments yet
+                  {{ t('assets.detail.noAttachments') }}
                 </p>
                 <p class="mt-1 max-w-xs text-sm text-muted">
-                  Keep photos, receipts, and manuals close at hand.
+                  {{ t('assets.detail.attachmentsHint') }}
                 </p>
               </div>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-muted">
-              <span>Drag files here, or</span>
+              <span>{{ t('assets.detail.dragFiles') }}</span>
               <UButton
                 variant="soft"
                 size="sm"
                 :loading="uploading"
                 @click="triggerUpload"
               >
-                Choose files
+                {{ t('assets.detail.chooseFiles') }}
               </UButton>
             </div>
           </div>
@@ -1104,7 +1105,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
           class="w-12 h-12 animate-spin text-attic-500 mx-auto mb-4"
         />
         <p class="text-gray-500">
-          Loading asset...
+          {{ t('assets.detail.loading') }}
         </p>
       </div>
     </div>
@@ -1113,8 +1114,8 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
     <UModal
       v-model:open="imageViewerOpen"
       fullscreen
-      :title="imageGallery[activeImageIndex]?.name || 'Asset image'"
-      description="Browse this asset’s attached images. Use the arrow keys or navigation buttons to move between images."
+      :title="imageGallery[activeImageIndex]?.name || t('assets.detail.assetImage')"
+      :description="t('assets.detail.galleryDescription')"
     >
       <template #content>
         <div class="flex h-[100dvh] w-screen flex-col bg-mist-950 text-white">
@@ -1124,14 +1125,14 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 {{ imageGallery[activeImageIndex]?.name || asset?.name }}
               </p>
               <p class="text-xs text-white/60">
-                {{ activeImageIndex + 1 }} of {{ imageGallery.length }} images
+                {{ t('assets.detail.imageCount', { current: activeImageIndex + 1, total: imageGallery.length }) }}
               </p>
             </div>
             <UButton
               variant="ghost"
               color="neutral"
               icon="i-lucide-x"
-              aria-label="Close image viewer"
+              :aria-label="t('assets.detail.closeViewer')"
               @click="imageViewerOpen = false"
             />
           </div>
@@ -1154,7 +1155,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               variant="solid"
               color="neutral"
               icon="i-lucide-chevron-left"
-              aria-label="Previous image"
+              :aria-label="t('assets.detail.previousImage')"
               class="absolute left-2 top-1/2 -translate-y-1/2 sm:left-6"
               @click="showAdjacentImage(-1)"
             />
@@ -1163,7 +1164,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               variant="solid"
               color="neutral"
               icon="i-lucide-chevron-right"
-              aria-label="Next image"
+              :aria-label="t('assets.detail.nextImage')"
               class="absolute right-2 top-1/2 -translate-y-1/2 sm:right-6"
               @click="showAdjacentImage(1)"
             />
@@ -1175,14 +1176,14 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 variant="ghost"
                 color="neutral"
                 icon="i-lucide-zoom-out"
-                aria-label="Zoom out"
+                :aria-label="t('assets.detail.zoomOut')"
                 :disabled="imageZoom <= 1"
                 @click="changeImageZoom(-0.5)"
               />
               <button
                 type="button"
                 class="min-w-12 text-center text-xs tabular-nums text-white/70 hover:text-white"
-                aria-label="Reset zoom"
+                :aria-label="t('assets.detail.resetZoom')"
                 :disabled="imageZoom === 1"
                 @click="resetImageZoom"
               >
@@ -1192,7 +1193,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                 variant="ghost"
                 color="neutral"
                 icon="i-lucide-zoom-in"
-                aria-label="Zoom in"
+                :aria-label="t('assets.detail.zoomIn')"
                 :disabled="imageZoom >= 3"
                 @click="changeImageZoom(0.5)"
               />
@@ -1208,7 +1209,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
                   type="button"
                   class="size-12 shrink-0 overflow-hidden rounded-lg border-2 transition-opacity sm:size-14"
                   :class="index === activeImageIndex ? 'border-white' : 'border-transparent opacity-55 hover:opacity-100'"
-                  :aria-label="`Show image ${index + 1}: ${image.name}`"
+                  :aria-label="t('assets.detail.showImage', { index: index + 1, name: image.name })"
                   :aria-current="index === activeImageIndex ? 'true' : undefined"
                   @click="selectGalleryImage(index)"
                 >
@@ -1228,8 +1229,8 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
     <!-- Delete Asset Modal -->
     <UModal
       v-model:open="deleteModalOpen"
-      title="Delete Asset"
-      description="This action cannot be undone."
+      :title="t('assets.detail.deleteAssetTitle')"
+      :description="t('assets.detail.cannotUndo')"
     >
       <template #content>
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
@@ -1242,28 +1243,35 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
             </div>
             <div>
               <h3 class="font-bold text-lg text-mist-950 dark:text-white">
-                Delete Asset
+                {{ t('assets.detail.deleteAssetTitle') }}
               </h3>
               <p class="text-sm text-gray-500">
-                This action cannot be undone.
+                {{ t('assets.detail.cannotUndo') }}
               </p>
             </div>
           </div>
           <p class="text-gray-600 dark:text-gray-300 mb-6">
-            Are you sure you want to delete "<strong>{{ asset?.name }}</strong>"? All associated data will be permanently removed. Contents will become standalone assets at their current location.
+            <i18n-t
+              keypath="assets.detail.deleteConfirm"
+              scope="global"
+            >
+              <template #name>
+                <strong>{{ asset?.name }}</strong>
+              </template>
+            </i18n-t>
           </p>
           <div class="flex justify-end gap-3">
             <UButton
               variant="ghost"
               @click="deleteModalOpen = false"
             >
-              Cancel
+              {{ t('assets.detail.cancel') }}
             </UButton>
             <UButton
               color="error"
               @click="deleteAsset"
             >
-              Delete Asset
+              {{ t('assets.detail.deleteAssetTitle') }}
             </UButton>
           </div>
         </div>
@@ -1274,8 +1282,8 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
     <UModal
       v-if="features.warranties"
       v-model:open="warrantyModalOpen"
-      :title="warranty ? 'Edit warranty' : 'Add warranty'"
-      description="Keep provider, policy, and coverage dates together."
+      :title="warranty ? t('assets.detail.editWarranty') : t('assets.detail.addWarrantyTitle')"
+      :description="t('assets.detail.warrantyHint')"
     >
       <template #content>
         <div class="w-full max-w-lg overflow-hidden rounded-[20px] bg-white shadow-xl dark:bg-mist-800">
@@ -1288,10 +1296,10 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
             </div>
             <div>
               <h3 class="font-extrabold text-mist-950 dark:text-white">
-                {{ warranty ? 'Edit warranty' : 'Add warranty' }}
+                {{ warranty ? t('assets.detail.editWarranty') : t('assets.detail.addWarrantyTitle') }}
               </h3>
               <p class="text-xs text-muted">
-                Keep provider, policy, and coverage dates together.
+                {{ t('assets.detail.warrantyHint') }}
               </p>
             </div>
           </div>
@@ -1302,24 +1310,24 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
           >
             <div class="space-y-2">
               <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Provider
+                {{ t('assets.detail.provider') }}
               </label>
               <input
                 v-model="warrantyForm.provider"
                 type="text"
-                placeholder="Warranty provider"
+                :placeholder="t('assets.detail.providerPlaceholder')"
                 class="block w-full rounded-xl border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm focus:border-attic-500 focus:ring-attic-500 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
               >
             </div>
 
             <div class="space-y-2">
               <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Policy Number
+                {{ t('assets.detail.policyNumber') }}
               </label>
               <input
                 v-model="warrantyForm.policy_number"
                 type="text"
-                placeholder="Policy number"
+                :placeholder="t('assets.detail.policyPlaceholder')"
                 class="block w-full rounded-xl border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm focus:border-attic-500 focus:ring-attic-500 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
               >
             </div>
@@ -1327,7 +1335,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div class="space-y-2">
                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Start Date
+                  {{ t('assets.detail.startDate') }}
                 </label>
                 <input
                   v-model="warrantyForm.start_date"
@@ -1338,7 +1346,7 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
 
               <div class="space-y-2">
                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  End Date
+                  {{ t('assets.detail.endDate') }}
                 </label>
                 <input
                   v-model="warrantyForm.end_date"
@@ -1350,12 +1358,12 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
 
             <div class="space-y-2">
               <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Notes
+                {{ t('assets.detail.notes') }}
               </label>
               <textarea
                 v-model="warrantyForm.notes"
                 rows="3"
-                placeholder="Additional notes"
+                :placeholder="t('assets.detail.notesPlaceholder')"
                 class="block w-full resize-none rounded-xl border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm focus:border-attic-500 focus:ring-attic-500 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
               />
             </div>
@@ -1368,17 +1376,17 @@ const warrantyStatus = computed((): { color: 'error' | 'warning' | 'success', te
               color="error"
               @click="deleteWarranty(); warrantyModalOpen = false"
             >
-              Delete
+              {{ t('assets.detail.delete') }}
             </UButton>
             <div class="flex gap-3 ml-auto">
               <UButton
                 variant="ghost"
                 @click="warrantyModalOpen = false"
               >
-                Cancel
+                {{ t('assets.detail.cancel') }}
               </UButton>
               <UButton @click="saveWarranty">
-                Save
+                {{ t('assets.detail.save') }}
               </UButton>
             </div>
           </div>

@@ -11,6 +11,7 @@ interface KeyMetadata {
   last_used_at: string | null
 }
 interface Permission { resource: string, label: string, levels: string[] }
+const { t, locale } = useI18n()
 const api = useApiFetch()
 const toast = useToast()
 const { data: permissions, error: permissionError } = useApi<Permission[]>('/api/me/api-keys/permissions')
@@ -38,8 +39,8 @@ const busy = ref(false)
 const formError = ref('')
 const copied = ref(false)
 const inputClass = 'w-full rounded-xl border border-mist-200 bg-white px-3 py-2.5 text-sm text-mist-950 outline-none transition focus:border-attic-500 focus:ring-2 focus:ring-attic-500/15 dark:border-mist-600 dark:bg-mist-800 dark:text-white'
-const fullDate = (value: string | null) => value ? new Date(value).toLocaleString() : undefined
-const expiryDate = (value: string | null) => value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No expiry'
+const fullDate = (value: string | null) => value ? new Date(value).toLocaleString(locale.value) : undefined
+const expiryDate = (value: string | null) => value ? new Date(value).toLocaleDateString(locale.value, { month: 'short', day: 'numeric', year: 'numeric' }) : t('misc.apiKeys.noExpiry')
 
 function applyPreset(level: string) {
   preset.value = level
@@ -73,7 +74,7 @@ async function run(action: () => Promise<void>) {
   try {
     await action()
   } catch (err) {
-    formError.value = (err as { data?: { error?: string } }).data?.error || 'Something went wrong. Please try again.'
+    formError.value = (err as { data?: { error?: string } }).data?.error || t('misc.apiKeys.somethingWrong')
   } finally { busy.value = false }
 }
 async function create() {
@@ -97,7 +98,7 @@ async function rename() {
     await api(`/api/me/api-keys/${selectedKey.value!.id}`, { method: 'PATCH', body: JSON.stringify({ description: name.value }) })
     editOpen.value = false
     await refresh()
-    toast.add({ title: 'Key name updated', color: 'success' })
+    toast.add({ title: t('misc.apiKeys.renamed'), color: 'success' })
   })
 }
 async function remove() {
@@ -106,14 +107,14 @@ async function remove() {
     await api(`/api/me/api-keys/${selectedKey.value!.id}`, { method: 'DELETE' })
     deleteOpen.value = false
     await refresh()
-    toast.add({ title: 'API key deleted', color: 'success' })
+    toast.add({ title: t('misc.apiKeys.deleted'), color: 'success' })
   })
 }
 async function copy() {
   try {
     await navigator.clipboard.writeText(secret.value)
     copied.value = true
-  } catch { toast.add({ title: 'Select and copy the key below', color: 'error' }) }
+  } catch { toast.add({ title: t('misc.apiKeys.copyFailed'), color: 'error' }) }
 }
 </script>
 
@@ -122,10 +123,10 @@ async function copy() {
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <h2 class="text-lg font-extrabold tracking-[-0.03em] text-mist-950 dark:text-white sm:text-xl">
-          API keys
+          {{ t('misc.apiKeys.title') }}
         </h2>
         <p class="mt-1 text-sm text-muted">
-          Manage the apps and assistants connected to your account.
+          {{ t('misc.apiKeys.subtitle') }}
         </p>
       </div>
       <UButton
@@ -134,14 +135,14 @@ async function copy() {
         :disabled="!permissions || !!permissionError || !!secret"
         @click="openCreate"
       >
-        Create key
+        {{ t('misc.apiKeys.createKey') }}
       </UButton>
     </header>
 
     <UAlert
       v-if="loadError || permissionError"
       color="error"
-      title="Could not load API keys. Please refresh the page and try again."
+      :title="t('misc.apiKeys.loadError')"
     />
 
     <section
@@ -154,7 +155,7 @@ async function copy() {
             id="active-keys-heading"
             class="text-sm font-bold text-mist-950 dark:text-white"
           >
-            Active keys
+            {{ t('misc.apiKeys.activeKeys') }}
           </h2>
           <span class="rounded-md bg-mist-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-muted dark:bg-mist-700">{{ activeKeys.length }}</span>
         </div>
@@ -163,7 +164,7 @@ async function copy() {
           color="neutral"
           variant="ghost"
           size="sm"
-          aria-label="Refresh API keys"
+          :aria-label="t('misc.apiKeys.refresh')"
           :loading="status === 'pending'"
           @click="refresh()"
         />
@@ -171,7 +172,7 @@ async function copy() {
       <div
         v-if="status === 'pending' && !keys"
         class="space-y-5 p-6"
-        aria-label="Loading API keys"
+        :aria-label="t('misc.apiKeys.loading')"
       >
         <USkeleton
           v-for="row in 3"
@@ -190,10 +191,10 @@ async function copy() {
           />
         </div>
         <h3 class="font-bold text-mist-950 dark:text-white">
-          No active API keys
+          {{ t('misc.apiKeys.none') }}
         </h3>
         <p class="mx-auto mt-1.5 max-w-sm text-sm leading-6 text-muted">
-          Create a key to connect an app or assistant to your inventory.
+          {{ t('misc.apiKeys.noneBody') }}
         </p>
         <UButton
           class="mt-5 rounded-xl"
@@ -202,7 +203,7 @@ async function copy() {
           :disabled="!permissions || !!permissionError"
           @click="openCreate"
         >
-          Create your first key
+          {{ t('misc.apiKeys.createFirst') }}
         </UButton>
       </div>
       <div
@@ -216,25 +217,25 @@ async function copy() {
                 scope="col"
                 class="px-5 py-3 sm:px-6"
               >
-                Name
+                {{ t('misc.apiKeys.colName') }}
               </th>
               <th
                 scope="col"
                 class="hidden px-5 py-3 sm:table-cell"
               >
-                Last used
+                {{ t('misc.apiKeys.colLastUsed') }}
               </th>
               <th
                 scope="col"
                 class="hidden px-5 py-3 lg:table-cell"
               >
-                Expires
+                {{ t('misc.apiKeys.colExpires') }}
               </th>
               <th
                 scope="col"
                 class="px-5 py-3 text-right sm:px-6"
               >
-                <span class="sr-only">Actions</span>
+                <span class="sr-only">{{ t('misc.apiKeys.colActions') }}</span>
               </th>
             </tr>
           </thead>
@@ -252,13 +253,13 @@ async function copy() {
                   {{ key.prefix }}…
                 </p>
                 <p class="mt-2 text-xs text-muted sm:hidden">
-                  Last used: {{ formatKeyLastUsed(key.last_used_at) }}
+                  {{ t('misc.apiKeys.lastUsed', { value: formatKeyLastUsed(key.last_used_at) }) }}
                 </p>
                 <p
                   v-if="key.expires_at"
                   class="mt-1 text-xs text-muted lg:hidden"
                 >
-                  Expires {{ expiryDate(key.expires_at) }}
+                  {{ t('misc.apiKeys.expiresOn', { date: expiryDate(key.expires_at) }) }}
                 </p>
               </td>
               <td class="hidden whitespace-nowrap px-5 py-5 text-muted sm:table-cell">
@@ -276,16 +277,16 @@ async function copy() {
                     icon="i-lucide-pencil"
                     variant="ghost"
                     color="neutral"
-                    :aria-label="`Edit ${key.description}`"
-                    title="Edit key"
+                    :aria-label="t('misc.apiKeys.editAria', { name: key.description })"
+                    :title="t('misc.apiKeys.editTitle')"
                     @click="openEdit(key)"
                   />
                   <UButton
                     icon="i-lucide-trash-2"
                     variant="ghost"
                     color="error"
-                    :aria-label="`Delete ${key.description}`"
-                    title="Delete key"
+                    :aria-label="t('misc.apiKeys.deleteAria', { name: key.description })"
+                    :title="t('misc.apiKeys.deleteTitle')"
                     @click="openDelete(key)"
                   />
                 </div>
@@ -299,13 +300,13 @@ async function copy() {
       <UIcon
         name="i-lucide-shield-check"
         class="mt-0.5 size-4 shrink-0"
-      />Keys act on your behalf. Only give them to apps you trust.
+      />{{ t('misc.apiKeys.trustNote') }}
     </p>
 
     <UModal
       v-model:open="createOpen"
-      title="Create API key"
-      description="Choose a name and the access your app needs."
+      :title="t('misc.apiKeys.createTitle')"
+      :description="t('misc.apiKeys.createDescription')"
       :dismissible="!busy"
     >
       <template #body>
@@ -319,22 +320,22 @@ async function copy() {
             color="error"
             :title="formError"
           />
-          <label class="block space-y-2"><span class="text-sm font-semibold">Name</span><input
+          <label class="block space-y-2"><span class="text-sm font-semibold">{{ t('misc.apiKeys.name') }}</span><input
             v-model="name"
             :class="inputClass"
             maxlength="255"
             required
-            placeholder="e.g. Home assistant"
-            aria-label="Name"
+            :placeholder="t('misc.apiKeys.namePlaceholder')"
+            :aria-label="t('misc.apiKeys.name')"
             autofocus
           ></label>
           <fieldset class="space-y-2">
             <legend class="mb-2 text-sm font-semibold">
-              Access
+              {{ t('misc.apiKeys.access') }}
             </legend>
             <div class="grid grid-cols-2 gap-3">
               <button
-                v-for="option in [{ value: 'read', label: 'Read only', help: 'View your inventory.' }, { value: 'write', label: 'Read & write', help: 'View and make changes.' }]"
+                v-for="option in [{ value: 'read', label: t('misc.apiKeys.readOnly'), help: t('misc.apiKeys.readOnlyHelp') }, { value: 'write', label: t('misc.apiKeys.readWrite'), help: t('misc.apiKeys.readWriteHelp') }]"
                 :key="option.value"
                 type="button"
                 class="rounded-xl border p-3 text-left transition-colors"
@@ -351,7 +352,7 @@ async function copy() {
               :aria-expanded="customize"
               @click="customize = !customize"
             >
-              Customize permissions<UIcon
+              {{ t('misc.apiKeys.customize') }}<UIcon
                 :name="customize ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
                 class="size-3.5"
               />
@@ -366,27 +367,27 @@ async function copy() {
                 class="flex items-center justify-between gap-3 py-2.5"
               ><span class="text-sm">{{ permission.label }}</span><select
                 :value="grants[permission.resource] || 'none'"
-                :aria-label="`${permission.label} access`"
+                :aria-label="t('misc.apiKeys.permissionAccess', { label: permission.label })"
                 class="rounded-lg border border-mist-200 bg-white px-2 py-1.5 text-xs dark:border-mist-600 dark:bg-mist-800"
                 @change="grants[permission.resource] = ($event.target as HTMLSelectElement).value; preset = 'custom'"
               ><option
                 v-for="level in permission.levels"
                 :key="level"
                 :value="level"
-              >{{ level === 'none' ? 'No access' : level === 'read' ? 'Read only' : 'Read & write' }}</option></select></label>
+              >{{ level === 'none' ? t('misc.apiKeys.noAccess') : level === 'read' ? t('misc.apiKeys.readOnly') : t('misc.apiKeys.readWrite') }}</option></select></label>
             </div>
           </fieldset>
-          <label class="block space-y-2"><span class="text-sm font-semibold">Expiration</span><select
+          <label class="block space-y-2"><span class="text-sm font-semibold">{{ t('misc.apiKeys.expiration') }}</span><select
             v-model="expiry"
             :class="inputClass"
-            aria-label="Expiration"
-          ><option value="never">No expiration</option><option value="30">In 30 days</option><option value="90">In 90 days</option><option value="365">In 1 year</option><option value="custom">Choose a date</option></select></label>
+            :aria-label="t('misc.apiKeys.expiration')"
+          ><option value="never">{{ t('misc.apiKeys.noExpiration') }}</option><option value="30">{{ t('misc.apiKeys.in30') }}</option><option value="90">{{ t('misc.apiKeys.in90') }}</option><option value="365">{{ t('misc.apiKeys.in365') }}</option><option value="custom">{{ t('misc.apiKeys.chooseDate') }}</option></select></label>
           <input
             v-if="expiry === 'custom'"
             v-model="customExpiry"
             type="datetime-local"
             :class="inputClass"
-            aria-label="Expiration date"
+            :aria-label="t('misc.apiKeys.expirationDate')"
             required
           >
         </form>
@@ -399,14 +400,14 @@ async function copy() {
             :disabled="busy"
             @click="createOpen = false"
           >
-            Cancel
+            {{ t('misc.apiKeys.cancel') }}
           </UButton><UButton
             type="submit"
             form="create-api-key"
             :loading="busy"
             :disabled="!name.trim() || !Object.values(grants).some(value => value !== 'none')"
           >
-            Create key
+            {{ t('misc.apiKeys.createKey') }}
           </UButton>
         </div>
       </template>
@@ -414,8 +415,8 @@ async function copy() {
 
     <UModal
       v-model:open="secretOpen"
-      title="Your API key is ready"
-      description="Copy it now. You won't be able to see this key again."
+      :title="t('misc.apiKeys.readyTitle')"
+      :description="t('misc.apiKeys.readyDescription')"
       :dismissible="false"
       :close="false"
     >
@@ -430,13 +431,13 @@ async function copy() {
           variant="outline"
           @click="copy"
         >
-          {{ copied ? 'Copied' : 'Copy key' }}
+          {{ copied ? t('misc.apiKeys.copied') : t('misc.apiKeys.copyKey') }}
         </UButton>
       </template>
       <template #footer>
         <div class="flex w-full justify-end">
           <UButton @click="secret = ''">
-            I saved my key
+            {{ t('misc.apiKeys.saved') }}
           </UButton>
         </div>
       </template>
@@ -444,8 +445,8 @@ async function copy() {
 
     <UModal
       v-model:open="editOpen"
-      title="Edit API key"
-      description="Update the name to make this key easier to recognize."
+      :title="t('misc.apiKeys.editDialogTitle')"
+      :description="t('misc.apiKeys.editDialogDescription')"
       :dismissible="!busy"
     >
       <template #body>
@@ -459,28 +460,28 @@ async function copy() {
             color="error"
             :title="formError"
           />
-          <label class="block space-y-2"><span class="text-sm font-semibold">Name</span><input
+          <label class="block space-y-2"><span class="text-sm font-semibold">{{ t('misc.apiKeys.name') }}</span><input
             v-model="name"
             :class="inputClass"
             maxlength="255"
-            aria-label="Name"
+            :aria-label="t('misc.apiKeys.name')"
             required
           ></label>
           <details class="rounded-xl border border-mist-200 p-3 text-sm dark:border-mist-600">
             <summary class="cursor-pointer font-semibold">
-              Permissions
+              {{ t('misc.apiKeys.permissions') }}
             </summary><ul class="mt-3 space-y-2 text-xs text-muted">
               <li
                 v-for="(level, resource) in selectedKey?.permissions"
                 :key="resource"
                 class="flex justify-between gap-4"
               >
-                <span>{{ permissions?.find(item => item.resource === resource)?.label || resource }}</span><span>{{ level === 'write' ? 'Read & write' : 'Read only' }}</span>
+                <span>{{ permissions?.find(item => item.resource === resource)?.label || resource }}</span><span>{{ level === 'write' ? t('misc.apiKeys.readWrite') : t('misc.apiKeys.readOnly') }}</span>
               </li>
             </ul>
           </details>
           <p class="text-xs leading-5 text-muted">
-            To change permissions or expiration, create a new key and delete this one.
+            {{ t('misc.apiKeys.permissionsNote') }}
           </p>
         </form>
       </template>
@@ -492,14 +493,14 @@ async function copy() {
             :disabled="busy"
             @click="editOpen = false"
           >
-            Cancel
+            {{ t('misc.apiKeys.cancel') }}
           </UButton><UButton
             type="submit"
             form="edit-api-key"
             :loading="busy"
             :disabled="!name.trim()"
           >
-            Save changes
+            {{ t('misc.apiKeys.saveChanges') }}
           </UButton>
         </div>
       </template>
@@ -507,8 +508,8 @@ async function copy() {
 
     <UModal
       v-model:open="deleteOpen"
-      title="Delete API key?"
-      :description="`Any app using “${selectedKey?.description || 'this key'}” will lose access immediately.`"
+      :title="t('misc.apiKeys.deleteDialogTitle')"
+      :description="t('misc.apiKeys.deleteDialogDescription', { name: selectedKey?.description || t('misc.apiKeys.thisKey') })"
       :dismissible="!busy"
     >
       <template #body>
@@ -517,7 +518,7 @@ async function copy() {
           color="error"
           :title="formError"
         /><p class="text-sm text-muted">
-          You can create a new key whenever you need one.
+          {{ t('misc.apiKeys.deleteNote') }}
         </p>
       </template>
       <template #footer>
@@ -528,13 +529,13 @@ async function copy() {
             :disabled="busy"
             @click="deleteOpen = false"
           >
-            Cancel
+            {{ t('misc.apiKeys.cancel') }}
           </UButton><UButton
             color="error"
             :loading="busy"
             @click="remove"
           >
-            Delete key
+            {{ t('misc.apiKeys.deleteTitle') }}
           </UButton>
         </div>
       </template>

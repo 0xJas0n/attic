@@ -17,6 +17,7 @@ interface User {
   api_key_last_used_at: string | null
 }
 
+const { t, locale } = useI18n()
 const { isAdmin, fetchSession } = useAuth()
 const apiFetch = useApiFetch()
 const toast = useToast()
@@ -119,10 +120,10 @@ const resetPasswordForm = ref({
   password: ''
 })
 
-const roleOptions = [
-  { label: 'User', value: 'user' },
-  { label: 'Admin', value: 'admin' }
-] as const
+const roleOptions = computed(() => [
+  { label: t('admin.users.role.user'), value: 'user' as const },
+  { label: t('admin.users.role.admin'), value: 'admin' as const }
+])
 
 const openCreateModal = () => {
   createForm.value = { email: '', name: '', password: '', role: 'user' }
@@ -153,11 +154,11 @@ const openDeleteModal = (user: User) => {
 
 const createUser = async () => {
   if (!createForm.value.email.trim()) {
-    toast.add({ title: 'Please enter an email address', color: 'error' })
+    toast.add({ title: t('admin.users.emailRequired'), color: 'error' })
     return
   }
   if (createForm.value.password.length < 8) {
-    toast.add({ title: 'Password must be at least 8 characters', color: 'error' })
+    toast.add({ title: t('admin.users.passwordMin'), color: 'error' })
     return
   }
 
@@ -167,12 +168,12 @@ const createUser = async () => {
       method: 'POST',
       body: JSON.stringify({ ...createForm.value, email: createForm.value.email.trim() })
     })
-    toast.add({ title: 'User created successfully', color: 'success' })
+    toast.add({ title: t('admin.users.created'), color: 'success' })
     isCreateModalOpen.value = false
     refresh()
   } catch (error: unknown) {
     const err = error as { data?: { error?: string } }
-    toast.add({ title: err?.data?.error || 'Failed to create user', color: 'error' })
+    toast.add({ title: err?.data?.error || t('admin.users.createFailed'), color: 'error' })
   } finally {
     isLoading.value = false
   }
@@ -181,7 +182,7 @@ const createUser = async () => {
 const updateUser = async () => {
   if (!selectedUser.value) return
   if (!editForm.value.email.trim()) {
-    toast.add({ title: 'Please enter an email address', color: 'error' })
+    toast.add({ title: t('admin.users.emailRequired'), color: 'error' })
     return
   }
 
@@ -191,12 +192,12 @@ const updateUser = async () => {
       method: 'PUT',
       body: JSON.stringify({ ...editForm.value, email: editForm.value.email.trim() })
     })
-    toast.add({ title: 'User updated successfully', color: 'success' })
+    toast.add({ title: t('admin.users.updated'), color: 'success' })
     isEditModalOpen.value = false
     await Promise.all([refresh(), fetchSession()])
   } catch (error: unknown) {
     const err = error as { data?: { error?: string } }
-    toast.add({ title: err?.data?.error || 'Failed to update user', color: 'error' })
+    toast.add({ title: err?.data?.error || t('admin.users.updateFailed'), color: 'error' })
   } finally {
     isLoading.value = false
   }
@@ -205,7 +206,7 @@ const updateUser = async () => {
 const resetPassword = async () => {
   if (!selectedUser.value) return
   if (resetPasswordForm.value.password.length < 8) {
-    toast.add({ title: 'Password must be at least 8 characters', color: 'error' })
+    toast.add({ title: t('admin.users.passwordMin'), color: 'error' })
     return
   }
 
@@ -215,11 +216,11 @@ const resetPassword = async () => {
       method: 'POST',
       body: JSON.stringify(resetPasswordForm.value)
     })
-    toast.add({ title: 'Password reset successfully', color: 'success' })
+    toast.add({ title: t('admin.users.passwordReset'), color: 'success' })
     isResetPasswordModalOpen.value = false
   } catch (error: unknown) {
     const err = error as { data?: { error?: string } }
-    toast.add({ title: err?.data?.error || 'Failed to reset password', color: 'error' })
+    toast.add({ title: err?.data?.error || t('admin.users.passwordResetFailed'), color: 'error' })
   } finally {
     isLoading.value = false
   }
@@ -232,12 +233,12 @@ const deleteUser = async () => {
     await apiFetch(`/api/users/${selectedUser.value.id}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'User deleted successfully', color: 'success' })
+    toast.add({ title: t('admin.users.deleted'), color: 'success' })
     isDeleteModalOpen.value = false
     refresh()
   } catch (error: unknown) {
     const err = error as { data?: { error?: string } }
-    toast.add({ title: err?.data?.error || 'Failed to delete user', color: 'error' })
+    toast.add({ title: err?.data?.error || t('admin.users.deleteFailed'), color: 'error' })
   } finally {
     isLoading.value = false
   }
@@ -296,12 +297,12 @@ function formatRelativeDate(dateString: string): string {
   const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return 'Added today'
-  if (diffDays === 1) return 'Added yesterday'
-  if (diffDays < 7) return `Added ${diffDays} days ago`
-  if (diffDays < 30) return `Added ${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`
-  if (diffDays < 365) return `Added ${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`
-  return `Added ${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? 's' : ''} ago`
+  if (diffDays === 0) return t('admin.users.added.today')
+  if (diffDays === 1) return t('admin.users.added.yesterday')
+  if (diffDays < 7) return t('admin.users.added.days', { count: diffDays })
+  if (diffDays < 30) return t('admin.users.added.weeks', { count: Math.floor(diffDays / 7) }, Math.floor(diffDays / 7))
+  if (diffDays < 365) return t('admin.users.added.months', { count: Math.floor(diffDays / 30) }, Math.floor(diffDays / 30))
+  return t('admin.users.added.years', { count: Math.floor(diffDays / 365) }, Math.floor(diffDays / 365))
 }
 </script>
 
@@ -311,13 +312,13 @@ function formatRelativeDate(dateString: string): string {
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-          Household access
+          {{ t('admin.users.eyebrow') }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          People
+          {{ t('admin.users.title') }}
         </h1>
         <p class="mt-1 max-w-2xl text-sm text-muted">
-          Invite members, assign administrator access, and manage sign-in methods.
+          {{ t('admin.users.subtitle') }}
         </p>
       </div>
       <!-- Quick Stats -->
@@ -325,7 +326,7 @@ function formatRelativeDate(dateString: string): string {
         <div class="px-3">
           <div>
             <p class="text-[10px] font-bold uppercase tracking-wider text-muted">
-              Total
+              {{ t('admin.users.statTotal') }}
             </p>
             <p class="text-lg font-bold text-mist-950 dark:text-white leading-none">
               {{ stats.total }}
@@ -335,7 +336,7 @@ function formatRelativeDate(dateString: string): string {
         <div class="px-3">
           <div>
             <p class="text-[10px] font-bold uppercase tracking-wider text-muted">
-              Admins
+              {{ t('admin.users.statAdmins') }}
             </p>
             <p class="text-lg font-bold text-mist-950 dark:text-white leading-none">
               {{ stats.admins }}
@@ -345,7 +346,7 @@ function formatRelativeDate(dateString: string): string {
         <div class="px-3">
           <div>
             <p class="text-[10px] font-bold uppercase tracking-wider text-muted">
-              Members
+              {{ t('admin.users.statMembers') }}
             </p>
             <p class="text-lg font-bold leading-none text-mist-950 dark:text-white">
               {{ stats.members }}
@@ -362,7 +363,7 @@ function formatRelativeDate(dateString: string): string {
         <UInput
           v-model="searchQuery"
           icon="i-lucide-search"
-          placeholder="Search name or email"
+          :placeholder="t('admin.users.searchPlaceholder')"
           class="w-full md:max-w-sm"
           size="lg"
         />
@@ -375,7 +376,7 @@ function formatRelativeDate(dateString: string): string {
             :class="selectedRole === role ? 'bg-white text-attic-600 shadow-sm dark:bg-mist-800 dark:text-attic-300' : 'text-muted hover:text-mist-600'"
             @click="selectedRole = role"
           >
-            {{ role === 'user' ? 'Members' : role }}
+            {{ role === 'all' ? t('admin.users.filterAll') : role === 'user' ? t('admin.users.statMembers') : t('admin.users.statAdmins') }}
           </button>
         </div>
       </div>
@@ -385,7 +386,7 @@ function formatRelativeDate(dateString: string): string {
         class="w-full shrink-0 whitespace-nowrap rounded-xl font-bold shadow-primary md:w-auto"
         @click="openCreateModal"
       >
-        Add person
+        {{ t('admin.users.addPerson') }}
       </UButton>
     </div>
 
@@ -414,13 +415,13 @@ function formatRelativeDate(dateString: string): string {
           />
         </div>
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No users yet
+          {{ t('admin.users.emptyTitle') }}
         </h3>
         <p class="text-sm text-muted mb-4 max-w-sm">
-          Add the people who share and manage this household inventory.
+          {{ t('admin.users.emptyBody') }}
         </p>
         <UButton @click="openCreateModal">
-          Add User
+          {{ t('admin.users.addUser') }}
         </UButton>
       </div>
 
@@ -434,17 +435,17 @@ function formatRelativeDate(dateString: string): string {
           class="w-12 h-12 text-mist-300 mb-4"
         />
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No results found
+          {{ t('admin.users.noResults') }}
         </h3>
         <p class="text-sm text-muted">
-          No people match these filters.
+          {{ t('admin.users.noMatch') }}
         </p>
         <button
           type="button"
           class="mt-2 text-sm font-semibold text-attic-500"
           @click="searchQuery = ''; selectedRole = 'all'"
         >
-          Clear filters
+          {{ t('admin.users.clearFilters') }}
         </button>
       </div>
 
@@ -455,22 +456,22 @@ function formatRelativeDate(dateString: string): string {
             <thead class="bg-mist-50/50 dark:bg-mist-700/30 border-b border-mist-100 dark:border-mist-700">
               <tr>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  User Details
+                  {{ t('admin.users.colUser') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Email Address
+                  {{ t('admin.users.colEmail') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Role
+                  {{ t('admin.users.colRole') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Auth
+                  {{ t('admin.users.colAuth') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  API keys
+                  {{ t('admin.users.colApiKeys') }}
                 </th>
                 <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-muted">
-                  Actions
+                  {{ t('admin.users.colActions') }}
                 </th>
               </tr>
             </thead>
@@ -522,7 +523,7 @@ function formatRelativeDate(dateString: string): string {
                       :name="user.role === 'admin' ? 'i-lucide-shield' : 'i-lucide-user'"
                       class="w-3.5 h-3.5"
                     />
-                    {{ user.role === 'admin' ? 'Admin' : 'User' }}
+                    {{ user.role === 'admin' ? t('admin.users.role.admin') : t('admin.users.role.user') }}
                   </span>
                 </td>
 
@@ -533,13 +534,13 @@ function formatRelativeDate(dateString: string): string {
                       v-if="user.has_password"
                       class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
                     >
-                      Password
+                      {{ t('admin.users.authPassword') }}
                     </span>
                     <span
                       v-if="user.has_oidc"
                       class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                     >
-                      OIDC
+                      {{ t('admin.users.authOidc') }}
                     </span>
                   </div>
                 </td>
@@ -549,14 +550,14 @@ function formatRelativeDate(dateString: string): string {
                   data-testid="user-api-key-usage"
                 >
                   <p class="whitespace-nowrap text-sm font-semibold text-mist-950 dark:text-white">
-                    {{ user.api_key_count || 0 }} active {{ user.api_key_count === 1 ? 'key' : 'keys' }}
+                    {{ t('admin.users.activeKeys', { count: user.api_key_count || 0 }, user.api_key_count || 0) }}
                   </p>
                   <p
                     v-if="user.api_key_count"
                     class="mt-1 whitespace-nowrap text-xs text-muted"
-                    :title="user.api_key_last_used_at ? new Date(user.api_key_last_used_at).toLocaleString() : undefined"
+                    :title="user.api_key_last_used_at ? new Date(user.api_key_last_used_at).toLocaleString(locale) : undefined"
                   >
-                    {{ user.api_key_last_used_at ? `Last used: ${formatKeyLastUsed(user.api_key_last_used_at)}` : 'Never used' }}
+                    {{ user.api_key_last_used_at ? t('admin.users.lastUsed', { when: formatKeyLastUsed(user.api_key_last_used_at) }) : t('admin.users.neverUsed') }}
                   </p>
                 </td>
 
@@ -565,7 +566,7 @@ function formatRelativeDate(dateString: string): string {
                   <div class="flex items-center justify-end gap-1">
                     <button
                       class="size-8 rounded flex items-center justify-center text-muted hover:text-attic-500 hover:bg-attic-500/10 transition-colors"
-                      title="Reset Password"
+                      :title="t('admin.users.resetPasswordTitle')"
                       @click="openResetPasswordModal(user)"
                     >
                       <UIcon
@@ -575,7 +576,7 @@ function formatRelativeDate(dateString: string): string {
                     </button>
                     <button
                       class="size-8 rounded flex items-center justify-center text-muted hover:text-attic-500 hover:bg-attic-500/10 transition-colors"
-                      title="Edit User"
+                      :title="t('admin.users.editUser')"
                       @click="openEditModal(user)"
                     >
                       <UIcon
@@ -585,7 +586,7 @@ function formatRelativeDate(dateString: string): string {
                     </button>
                     <button
                       class="size-8 rounded flex items-center justify-center text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      title="Delete User"
+                      :title="t('admin.users.deleteUser')"
                       @click="openDeleteModal(user)"
                     >
                       <UIcon
@@ -603,9 +604,9 @@ function formatRelativeDate(dateString: string): string {
         <!-- Footer with Pagination -->
         <div class="px-6 py-3 border-t border-mist-100 dark:border-mist-700 bg-mist-50/50 dark:bg-mist-700/20 flex items-center justify-between">
           <p class="text-xs text-muted">
-            Showing {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }} of {{ filteredUsers.length }} users
+            {{ t('admin.users.showing', { from: (currentPage - 1) * itemsPerPage + 1, to: Math.min(currentPage * itemsPerPage, filteredUsers.length), total: filteredUsers.length }) }}
             <span v-if="searchQuery && users?.length !== filteredUsers.length">
-              (filtered from {{ users?.length || 0 }})
+              {{ t('admin.users.filteredFrom', { total: users?.length || 0 }) }}
             </span>
           </p>
           <div
@@ -617,17 +618,17 @@ function formatRelativeDate(dateString: string): string {
               :disabled="currentPage === 1"
               @click="prevPage"
             >
-              Prev
+              {{ t('admin.users.prev') }}
             </button>
             <span class="text-xs text-muted px-2">
-              Page {{ currentPage }} of {{ totalPages }}
+              {{ t('admin.users.page', { page: currentPage, pages: totalPages }) }}
             </span>
             <button
               class="px-3 py-1.5 text-xs font-medium border border-mist-200 dark:border-mist-600 rounded-lg hover:bg-mist-100 dark:hover:bg-mist-700 text-mist-600 dark:text-mist-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               :disabled="currentPage === totalPages"
               @click="nextPage"
             >
-              Next
+              {{ t('admin.users.next') }}
             </button>
           </div>
         </div>
@@ -637,8 +638,8 @@ function formatRelativeDate(dateString: string): string {
     <!-- Create User Modal -->
     <UModal
       v-model:open="isCreateModalOpen"
-      title="Add a person"
-      description="Create their sign-in and choose household access."
+      :title="t('admin.users.addModalTitle')"
+      :description="t('admin.users.addModalDescription')"
     >
       <template #content>
         <div class="w-full max-w-lg overflow-hidden rounded-[22px] bg-white shadow-xl dark:bg-mist-800">
@@ -651,13 +652,13 @@ function formatRelativeDate(dateString: string): string {
             </div>
             <div>
               <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-attic-500">
-                New account
+                {{ t('admin.users.newAccount') }}
               </p>
               <p class="text-lg font-extrabold text-mist-950 dark:text-white">
-                Add a person
+                {{ t('admin.users.addModalHeading') }}
               </p>
               <p class="text-xs text-muted">
-                Create their sign-in and choose household access.
+                {{ t('admin.users.addModalSubtitle') }}
               </p>
             </div>
           </div>
@@ -683,12 +684,12 @@ function formatRelativeDate(dateString: string): string {
 
             <div class="space-y-2">
               <label class="block text-xs font-bold uppercase tracking-wider text-muted">
-                Display name
+                {{ t('admin.users.displayName') }}
               </label>
               <input
                 v-model="createForm.name"
                 type="text"
-                placeholder="e.g. John Doe"
+                :placeholder="t('admin.users.namePlaceholder')"
                 autocomplete="name"
                 class="w-full rounded-xl border border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm outline-none transition-all placeholder:text-dimmed focus:border-attic-500 focus:ring-2 focus:ring-attic-500/15 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
               >
@@ -702,7 +703,7 @@ function formatRelativeDate(dateString: string): string {
                 <input
                   v-model="createForm.password"
                   :type="showCreatePassword ? 'text' : 'password'"
-                  placeholder="At least 8 characters"
+                  :placeholder="t('admin.users.passwordPlaceholder')"
                   minlength="8"
                   required
                   autocomplete="new-password"
@@ -711,7 +712,7 @@ function formatRelativeDate(dateString: string): string {
                 <button
                   type="button"
                   class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted hover:text-mist-600"
-                  :aria-label="showCreatePassword ? 'Hide password' : 'Show password'"
+                  :aria-label="showCreatePassword ? t('admin.users.hidePassword') : t('admin.users.showPassword')"
                   @click="showCreatePassword = !showCreatePassword"
                 >
                   <UIcon
@@ -721,13 +722,13 @@ function formatRelativeDate(dateString: string): string {
                 </button>
               </div>
               <p class="text-xs text-muted">
-                Share it securely—the person can change it after signing in.
+                {{ t('admin.users.passwordHint') }}
               </p>
             </div>
 
             <fieldset class="space-y-2">
               <legend class="text-xs font-bold uppercase tracking-wider text-muted">
-                Access level
+                {{ t('admin.users.accessLevel') }}
               </legend>
               <div class="grid grid-cols-2 gap-3">
                 <button
@@ -750,9 +751,9 @@ function formatRelativeDate(dateString: string): string {
                   </div>
                   <div>
                     <p class="text-sm font-extrabold text-mist-900 dark:text-white">
-                      {{ option.value === 'admin' ? 'Administrator' : 'Member' }}
+                      {{ option.value === 'admin' ? t('admin.users.role.administrator') : t('admin.users.role.member') }}
                     </p><p class="mt-0.5 text-[11px] leading-4 text-muted">
-                      {{ option.value === 'admin' ? 'Full household access' : 'Standard inventory access' }}
+                      {{ option.value === 'admin' ? t('admin.users.role.adminAccess') : t('admin.users.role.memberAccess') }}
                     </p>
                   </div>
                 </button>
@@ -767,7 +768,7 @@ function formatRelativeDate(dateString: string): string {
               class="rounded-xl"
               @click="isCreateModalOpen = false"
             >
-              Cancel
+              {{ t('admin.users.cancel') }}
             </UButton>
             <UButton
               type="submit"
@@ -776,7 +777,7 @@ function formatRelativeDate(dateString: string): string {
               :loading="isLoading"
               class="rounded-xl font-bold shadow-primary"
             >
-              Add person
+              {{ t('admin.users.addPerson') }}
             </UButton>
           </div>
         </div>
@@ -786,8 +787,8 @@ function formatRelativeDate(dateString: string): string {
     <!-- Edit User Modal -->
     <UModal
       v-model:open="isEditModalOpen"
-      :title="`Edit ${selectedUser?.name || selectedUser?.email.split('@')[0] || 'person'}`"
-      :description="selectedUser?.email || 'Update account details and household access.'"
+      :title="t('admin.users.editTitle', { name: selectedUser?.name || selectedUser?.email.split('@')[0] || t('admin.users.person') })"
+      :description="selectedUser?.email || t('admin.users.editDescription')"
     >
       <template #content>
         <div class="w-full max-w-lg overflow-hidden rounded-[22px] bg-white shadow-xl dark:bg-mist-800">
@@ -801,7 +802,7 @@ function formatRelativeDate(dateString: string): string {
             </div>
             <div class="min-w-0">
               <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-attic-500">
-                Account settings
+                {{ t('admin.users.accountSettings') }}
               </p>
               <p class="truncate text-lg font-extrabold text-mist-950 dark:text-white">
                 Edit {{ selectedUser?.name || selectedUser?.email.split('@')[0] }}
@@ -819,7 +820,7 @@ function formatRelativeDate(dateString: string): string {
           >
             <div class="space-y-2">
               <label class="block text-xs font-bold uppercase tracking-wider text-muted">
-                Email address
+                {{ t('admin.users.emailAddress') }}
               </label>
               <input
                 v-model="editForm.email"
@@ -832,19 +833,19 @@ function formatRelativeDate(dateString: string): string {
 
             <div class="space-y-2">
               <label class="block text-xs font-bold uppercase tracking-wider text-muted">
-                Display name
+                {{ t('admin.users.displayName') }}
               </label>
               <input
                 v-model="editForm.name"
                 type="text"
-                placeholder="e.g. John Doe"
+                :placeholder="t('admin.users.namePlaceholder')"
                 class="w-full rounded-xl border border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm outline-none transition-all placeholder:text-dimmed focus:border-attic-500 focus:ring-2 focus:ring-attic-500/15 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
               >
             </div>
 
             <fieldset class="space-y-2">
               <legend class="text-xs font-bold uppercase tracking-wider text-muted">
-                Access level
+                {{ t('admin.users.accessLevel') }}
               </legend>
               <div class="grid grid-cols-2 gap-3">
                 <button
@@ -869,10 +870,10 @@ function formatRelativeDate(dateString: string): string {
                   </div>
                   <div>
                     <p class="text-sm font-extrabold text-mist-900 dark:text-white">
-                      {{ option.value === 'admin' ? 'Administrator' : 'Member' }}
+                      {{ option.value === 'admin' ? t('admin.users.role.administrator') : t('admin.users.role.member') }}
                     </p>
                     <p class="mt-0.5 text-[11px] leading-4 text-muted">
-                      {{ option.value === 'admin' ? 'Full household access' : 'Standard inventory access' }}
+                      {{ option.value === 'admin' ? t('admin.users.role.adminAccess') : t('admin.users.role.memberAccess') }}
                     </p>
                   </div>
                 </button>
@@ -884,7 +885,7 @@ function formatRelativeDate(dateString: string): string {
                 name="i-lucide-info"
                 class="mt-0.5 size-3.5 shrink-0"
               />
-              Role changes take effect the next time this person accesses the application.
+              {{ t('admin.users.roleNote') }}
             </div>
           </form>
 
@@ -895,7 +896,7 @@ function formatRelativeDate(dateString: string): string {
               class="rounded-xl"
               @click="isEditModalOpen = false"
             >
-              Cancel
+              {{ t('admin.users.cancel') }}
             </UButton>
             <UButton
               type="submit"
@@ -904,7 +905,7 @@ function formatRelativeDate(dateString: string): string {
               :loading="isLoading"
               class="rounded-xl font-bold shadow-primary"
             >
-              Save changes
+              {{ t('admin.users.saveChanges') }}
             </UButton>
           </div>
         </div>
@@ -914,8 +915,8 @@ function formatRelativeDate(dateString: string): string {
     <!-- Reset Password Modal -->
     <UModal
       v-model:open="isResetPasswordModalOpen"
-      title="Reset Password"
-      :description="`Set a new password for ${selectedUser?.email || 'this user'}.`"
+      :title="t('admin.users.resetPasswordTitle')"
+      :description="t('admin.users.resetDescription', { email: selectedUser?.email || t('admin.users.thisUser') })"
     >
       <template #content>
         <div class="w-full max-w-lg overflow-hidden rounded-[24px] bg-white shadow-xl ring-1 ring-mist-200/80 dark:bg-mist-800 dark:ring-mist-700">
@@ -930,13 +931,13 @@ function formatRelativeDate(dateString: string): string {
               </div>
               <div>
                 <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/70">
-                  Account administration
+                  {{ t('admin.users.accountAdmin') }}
                 </p>
                 <h2 class="mt-1 text-xl font-extrabold tracking-[-0.03em]">
-                  Reset password
+                  {{ t('admin.users.resetPassword') }}
                 </h2>
                 <p class="mt-1 text-sm text-white/75">
-                  Set a fresh sign-in password for this household member.
+                  {{ t('admin.users.resetSubtitle') }}
                 </p>
               </div>
             </div>
@@ -955,23 +956,23 @@ function formatRelativeDate(dateString: string): string {
               </div>
               <div class="min-w-0">
                 <p class="text-[11px] font-extrabold uppercase tracking-[0.12em] text-attic-600 dark:text-attic-300">
-                  Resetting for
+                  {{ t('admin.users.resettingFor') }}
                 </p>
                 <p class="truncate text-sm font-bold text-mist-800 dark:text-white">
-                  {{ selectedUser?.email || 'Selected user' }}
+                  {{ selectedUser?.email || t('admin.users.selectedUser') }}
                 </p>
               </div>
             </div>
 
             <UFormField
-              label="New password"
+              :label="t('admin.users.newPassword')"
               name="resetPassword"
               help="Use at least 8 characters."
             >
               <UInput
                 v-model="resetPasswordForm.password"
                 type="password"
-                placeholder="Create a temporary password"
+                :placeholder="t('admin.users.tempPasswordPlaceholder')"
                 autocomplete="new-password"
                 icon="i-lucide-lock-keyhole"
                 size="lg"
@@ -987,7 +988,7 @@ function formatRelativeDate(dateString: string): string {
                 class="rounded-xl font-bold"
                 @click="isResetPasswordModalOpen = false"
               >
-                Cancel
+                {{ t('admin.users.cancel') }}
               </UButton>
               <UButton
                 type="submit"
@@ -1000,7 +1001,7 @@ function formatRelativeDate(dateString: string): string {
                   name="i-lucide-key-round"
                   class="size-4"
                 />
-                Reset password
+                {{ t('admin.users.resetPassword') }}
               </UButton>
             </div>
           </form>
@@ -1011,8 +1012,8 @@ function formatRelativeDate(dateString: string): string {
     <!-- Delete User Modal -->
     <UModal
       v-model:open="isDeleteModalOpen"
-      title="Delete User"
-      description="Confirm permanent deletion of this user account."
+      :title="t('admin.users.deleteUser')"
+      :description="t('admin.users.deleteDescription')"
     >
       <template #content>
         <div class="w-full max-w-md rounded-[20px] bg-white p-6 shadow-xl dark:bg-mist-800">
@@ -1025,10 +1026,10 @@ function formatRelativeDate(dateString: string): string {
             </div>
             <div class="flex-1">
               <h3 class="text-lg font-bold text-mist-950 dark:text-white">
-                Delete User
+                {{ t('admin.users.deleteButton') }}
               </h3>
               <p class="text-sm text-muted mt-2">
-                Are you sure you want to delete <strong class="text-mist-700 dark:text-mist-300">{{ selectedUser?.email }}</strong>? This action cannot be undone.
+                {{ t('admin.users.deleteConfirm', { email: selectedUser?.email }) }}
               </p>
             </div>
           </div>
@@ -1038,14 +1039,14 @@ function formatRelativeDate(dateString: string): string {
               color="neutral"
               @click="isDeleteModalOpen = false"
             >
-              Cancel
+              {{ t('admin.users.cancel') }}
             </UButton>
             <UButton
               color="error"
               :loading="isLoading"
               @click="deleteUser"
             >
-              Delete User
+              {{ t('admin.users.deleteButton') }}
             </UButton>
           </div>
         </div>

@@ -9,6 +9,7 @@ defineProps<{
   iconClass?: string
 }>()
 const emit = defineEmits<{ edit: [], delete: [] }>()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -34,14 +35,14 @@ const emit = defineEmits<{ edit: [], delete: [] }>()
           {{ name }}
         </h3>
         <p class="mt-0.5 text-xs text-muted">
-          {{ assetCount }} {{ assetCount === 1 ? 'asset' : 'assets' }}
+          {{ t('misc.libraryCard.assets', assetCount) }}
         </p>
       </div>
     </div>
 
     <div class="min-w-0 pl-14 sm:pl-0">
       <p class="line-clamp-2 text-sm leading-5 text-muted">
-        {{ description || 'No description yet.' }}
+        {{ description || t('misc.libraryCard.noDescription') }}
       </p>
       <div
         v-if="$slots.metadata"
@@ -54,10 +55,10 @@ const emit = defineEmits<{ edit: [], delete: [] }>()
     <div class="flex items-center justify-end gap-1.5 pl-14 sm:pl-0">
       <NuxtLink
         :to="assetsTo"
-        :aria-label="`View assets in ${name}`"
+        :aria-label="t('misc.libraryCard.viewAssetsIn', { name })"
         class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-bold text-attic-600 hover:bg-attic-50 focus-visible:outline-2 focus-visible:outline-attic-500 dark:text-attic-300 dark:hover:bg-attic-500/10"
       >
-        View assets
+        {{ t('misc.libraryCard.viewAssets') }}
         <UIcon
           name="i-lucide-arrow-right"
           class="size-4"
@@ -70,18 +71,18 @@ const emit = defineEmits<{ edit: [], delete: [] }>()
         variant="outline"
         size="sm"
         class="rounded-lg"
-        :aria-label="`Edit ${name}`"
+        :aria-label="t('misc.libraryCard.editName', { name })"
         @click="emit('edit')"
       >
-        Edit
+        {{ t('misc.libraryCard.edit') }}
       </UButton>
-      <UDropdownMenu :items="[{ label: 'Delete', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => emit('delete') }]">
+      <UDropdownMenu :items="[{ label: t('misc.libraryCard.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => emit('delete') }]">
         <UButton
           icon="i-lucide-ellipsis"
           color="neutral"
           variant="ghost"
           class="shrink-0 rounded-lg"
-          :aria-label="`Actions for ${name}`"
+          :aria-label="t('misc.libraryCard.actionsFor', { name })"
         />
       </UDropdownMenu>
     </div>

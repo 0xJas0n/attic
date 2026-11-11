@@ -9,6 +9,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { t } = useI18n()
 
 const attributeId = computed(() => route.params.id as string)
 
@@ -36,15 +37,15 @@ watch(attribute, (attr) => {
 }, { immediate: true })
 
 // Data types available
-const dataTypes = [
-  { value: 'url', label: 'URL', icon: 'i-lucide-link', description: 'A web link with optional display text' },
-  { value: 'select', label: 'Select', icon: 'i-lucide-list-filter', description: 'Choose one or multiple configured options' },
-  { value: 'string', label: 'String', icon: 'i-lucide-type', description: 'Short text, names, or identifiers' },
-  { value: 'text', label: 'Text', icon: 'i-lucide-align-left', description: 'Long form text or descriptions' },
-  { value: 'number', label: 'Number', icon: 'i-lucide-hash', description: 'Numeric values' },
-  { value: 'boolean', label: 'Boolean', icon: 'i-lucide-toggle-left', description: 'True/false values' },
-  { value: 'date', label: 'Date', icon: 'i-lucide-calendar', description: 'Date values' }
-]
+const dataTypes = computed(() => [
+  { value: 'url', label: t('catalog.attributeForm.typeUrl'), icon: 'i-lucide-link', description: t('catalog.attributeForm.typeUrlDesc') },
+  { value: 'select', label: t('catalog.attributeForm.typeSelect'), icon: 'i-lucide-list-filter', description: t('catalog.attributeForm.typeSelectDesc') },
+  { value: 'string', label: t('catalog.attributeForm.typeString'), icon: 'i-lucide-type', description: t('catalog.attributeForm.typeStringDesc') },
+  { value: 'text', label: t('catalog.attributeForm.typeText'), icon: 'i-lucide-align-left', description: t('catalog.attributeForm.typeTextDesc') },
+  { value: 'number', label: t('catalog.attributeForm.typeNumber'), icon: 'i-lucide-hash', description: t('catalog.attributeForm.typeNumberDesc') },
+  { value: 'boolean', label: t('catalog.attributeForm.typeBoolean'), icon: 'i-lucide-toggle-left', description: t('catalog.attributeForm.typeBooleanDesc') },
+  { value: 'date', label: t('catalog.attributeForm.typeDate'), icon: 'i-lucide-calendar', description: t('catalog.attributeForm.typeDateDesc') }
+])
 
 // Saving state
 const saving = ref(false)
@@ -96,11 +97,11 @@ function getTypeStyle(type: string): { bgColor: string, textColor: string, borde
 // Save attribute
 async function saveAttribute() {
   if (!form.name.trim()) {
-    toast.add({ title: 'Please enter an attribute name', color: 'error' })
+    toast.add({ title: t('catalog.attributeForm.nameRequired'), color: 'error' })
     return
   }
   if (!form.key.trim()) {
-    toast.add({ title: 'Please enter an attribute key', color: 'error' })
+    toast.add({ title: t('catalog.attributeForm.keyRequired'), color: 'error' })
     return
   }
 
@@ -114,11 +115,11 @@ async function saveAttribute() {
       ...(form.data_type === 'select' ? { selection_mode: form.selection_mode, options: attributeOptionPayload(form.options) } : {})
     }, deletedOptionCount
     }, async () => {
-      toast.add({ title: 'Attribute updated successfully', color: 'success' })
+      toast.add({ title: t('catalog.attributeForm.updated'), color: 'success' })
       await router.push('/attributes')
     })
   } catch {
-    toast.add({ title: 'Failed to update attribute', color: 'error' })
+    toast.add({ title: t('catalog.attributeForm.updateFailed'), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -153,16 +154,16 @@ function cancel() {
         class="w-12 h-12 text-red-500 mb-4"
       />
       <h2 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-        Attribute not found
+        {{ t('catalog.attributeForm.notFound') }}
       </h2>
       <p class="text-muted mb-4">
-        The attribute you're looking for doesn't exist or has been deleted.
+        {{ t('catalog.attributeForm.notFoundBody') }}
       </p>
       <UButton
         to="/attributes"
         variant="ghost"
       >
-        Back to Attributes
+        {{ t('catalog.attributeForm.back') }}
       </UButton>
     </div>
 
@@ -176,24 +177,24 @@ function cancel() {
               to="/"
               class="hover:text-attic-500 transition-colors"
             >
-              Home
+              {{ t('catalog.shared.home') }}
             </NuxtLink>
             <span class="mx-2 text-mist-300 dark:text-mist-600">/</span>
             <NuxtLink
               to="/attributes"
               class="hover:text-attic-500 transition-colors"
             >
-              Attributes
+              {{ t('shell.nav.attributes') }}
             </NuxtLink>
             <span class="mx-2 text-mist-300 dark:text-mist-600">/</span>
-            <span class="text-mist-950 dark:text-white">Edit</span>
+            <span class="text-mist-950 dark:text-white">{{ t('catalog.attributeForm.crumbEdit') }}</span>
           </nav>
           <div>
             <h1 class="text-3xl font-extrabold tracking-tight text-mist-950 dark:text-white">
-              Edit Attribute
+              {{ t('catalog.attributeForm.editTitle') }}
             </h1>
             <p class="text-muted mt-1">
-              Update the details of "{{ attribute?.name }}".
+              {{ t('catalog.attributeForm.editIntro', { name: attribute?.name }) }}
             </p>
           </div>
         </div>
@@ -203,14 +204,14 @@ function cancel() {
             color="neutral"
             @click="cancel"
           >
-            Cancel
+            {{ t('catalog.shared.cancel') }}
           </UButton>
           <UButton
             icon="i-lucide-save"
             :loading="saving"
             @click="saveAttribute"
           >
-            Save Changes
+            {{ t('catalog.attributeForm.saveChanges') }}
           </UButton>
         </div>
       </div>
@@ -222,32 +223,32 @@ function cancel() {
             <!-- Name Field -->
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Attribute Name
+                {{ t('catalog.attributeForm.name') }}
               </label>
               <input
                 v-model="form.name"
                 type="text"
-                placeholder="e.g. Purchase Date"
+                :placeholder="t('catalog.attributeForm.namePlaceholder')"
                 class="w-full px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all placeholder:text-dimmed font-medium text-mist-950 dark:text-white"
               >
               <p class="text-xs text-muted mt-1">
-                This is the display name shown in forms and lists.
+                {{ t('catalog.attributeForm.nameHint') }}
               </p>
             </div>
 
             <!-- Key Field -->
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Attribute Key
+                {{ t('catalog.attributeForm.key') }}
               </label>
               <input
                 v-model="form.key"
                 type="text"
-                placeholder="e.g. purchase_date"
+                :placeholder="t('catalog.attributeForm.keyPlaceholder')"
                 class="w-full px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all placeholder:text-dimmed font-mono text-sm text-mist-950 dark:text-white"
               >
               <p class="text-xs text-muted mt-1">
-                A unique identifier for this attribute.
+                {{ t('catalog.attributeForm.keyHintEdit') }}
               </p>
             </div>
 
@@ -258,17 +259,17 @@ function cancel() {
               <label
                 for="selection-mode"
                 class="block font-semibold text-mist-950 dark:text-white"
-              >Selection mode</label>
+              >{{ t('catalog.attributeForm.selectionMode') }}</label>
               <select
                 id="selection-mode"
                 v-model="form.selection_mode"
                 class="rounded-lg border border-default bg-default p-2 text-mist-950 dark:text-white"
               >
                 <option value="single">
-                  Single
+                  {{ t('catalog.attributeForm.single') }}
                 </option>
                 <option value="multiple">
-                  Multiple
+                  {{ t('catalog.attributeForm.multiple') }}
                 </option>
               </select>
               <AttributeOptionsEditor
@@ -278,12 +279,12 @@ function cancel() {
             <!-- Data Type Field -->
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-3">
-                Data Type
+                {{ t('catalog.attributeForm.dataType') }}
               </label>
               <div
                 class="grid grid-cols-1 sm:grid-cols-2 gap-3"
                 role="radiogroup"
-                aria-label="Data type"
+                :aria-label="t('catalog.attributeForm.dataTypeAria')"
               >
                 <button
                   v-for="type in dataTypes"
@@ -335,10 +336,10 @@ function cancel() {
             />
             <div>
               <p class="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                Caution
+                {{ t('catalog.attributeForm.cautionTitle') }}
               </p>
               <p class="text-sm text-amber-600 dark:text-amber-400 mt-1">
-                A populated field cannot change its type or selection mode. Renaming this field will show the number of affected assets before confirmation.
+                {{ t('catalog.attributeForm.cautionBody') }}
               </p>
             </div>
           </div>

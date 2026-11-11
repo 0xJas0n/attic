@@ -27,7 +27,8 @@ const mockToast = {
 
 const mockApiFetch = vi.fn()
 
-vi.mock('#app', () => ({
+vi.mock('#app', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useRuntimeConfig: vi.fn(() => ({
     public: { apiBase: 'http://localhost:8080' }
   })),

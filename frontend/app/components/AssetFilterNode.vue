@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Attribute, FilterIssue, FilterNode, FilterRule, OrganizationFeatures } from '~/types/api'
-import { newAttributeRule, normalizeIssuePath, quickSearchDescription, operatorLabels, ruleOperators } from '~/utils/assetFilters'
+import { newAttributeRule, normalizeIssuePath, quickSearchDescription, operatorLabel, ruleOperators } from '~/utils/assetFilters'
 
 interface Option { label: string, value: string }
 const props = withDefaults(defineProps<{
@@ -14,20 +14,21 @@ const props = withDefaults(defineProps<{
   ruleCount: number
 }>(), { path: 'expression', depth: 1, issues: () => [] })
 const emit = defineEmits<{ 'update:modelValue': [node: FilterNode], 'remove': [] }>()
+const { t } = useI18n()
 const fields = computed(() => [
-  { label: 'Quick search', value: 'q' },
-  ...(props.features.tags ? [{ label: 'Tags', value: 'tags' }] : []),
-  ...(props.features.attributes ? [{ label: 'All attribute values', value: 'attribute_q' }] : []),
+  { label: t('assets.filterNode.quickSearch'), value: 'q' },
+  ...(props.features.tags ? [{ label: t('assets.filterNode.tags'), value: 'tags' }] : []),
+  ...(props.features.attributes ? [{ label: t('assets.filterNode.allAttributeValues'), value: 'attribute_q' }] : []),
   ...(['collections', 'category', 'location', 'condition'] as const)
     .filter(field => props.features[({ collections: 'collections', category: 'categories', location: 'locations', condition: 'conditions' } as const)[field]])
-    .map(field => ({ label: ({ collections: 'Collections', category: 'Category', location: 'Location', condition: 'Condition' })[field], value: field })),
-  ...props.attributes.map(a => ({ label: `Attribute: ${a.name}`, value: `attribute:${a.id}` }))
+    .map(field => ({ label: t(`assets.filterNode.${field}`), value: field })),
+  ...props.attributes.map(a => ({ label: t('assets.filterNode.attributeNamed', { name: a.name }), value: `attribute:${a.id}` }))
 ])
 const selectedField = computed(() => props.modelValue.kind === 'rule' ? props.modelValue.field === 'attribute' ? `attribute:${props.modelValue.attribute_id}` : props.modelValue.field : '')
 const comparisonOptions = computed(() => props.modelValue.kind === 'rule'
-  ? ruleOperators(props.modelValue).map(value => ({ label: operatorLabels[value], value }))
+  ? ruleOperators(props.modelValue).map(value => ({ label: operatorLabel(value), value }))
   : [])
-const fieldOptions = computed(() => fields.value.some(f => f.value === selectedField.value) ? fields.value : [{ label: 'Unavailable field — choose a replacement', value: selectedField.value }, ...fields.value])
+const fieldOptions = computed(() => fields.value.some(f => f.value === selectedField.value) ? fields.value : [{ label: t('assets.filterNode.unavailableField'), value: selectedField.value }, ...fields.value])
 const attribute = computed(() => {
   const node = props.modelValue
   return node.kind === 'rule' ? props.attributes.find(a => a.id === node.attribute_id) : undefined
@@ -41,7 +42,7 @@ const values = computed(() => {
   const available = props.modelValue.field === 'attribute'
     ? attribute.value?.options?.map(o => ({ label: o.label, value: o.id })) || []
     : props.options[props.modelValue.field] || []
-  return [...available, ...(props.modelValue.values || []).filter(id => !available.some(o => o.value === id)).map(id => ({ label: `Unavailable value (${id})`, value: id }))]
+  return [...available, ...(props.modelValue.values || []).filter(id => !available.some(o => o.value === id)).map(id => ({ label: t('assets.filterNode.unavailableValue', { id }), value: id }))]
 })
 const ownIssues = computed(() => props.issues.filter((issue) => {
   const path = normalizeIssuePath(issue.path)
@@ -91,7 +92,7 @@ function add(group = false) {
 <template>
   <fieldset
     class="min-w-0 space-y-3 rounded-xl border border-default p-3"
-    :aria-label="modelValue.kind === 'group' ? 'Filter group' : 'Filter rule'"
+    :aria-label="modelValue.kind === 'group' ? t('assets.filterNode.group') : t('assets.filterNode.rule')"
   >
     <div
       v-if="modelValue.kind === 'group'"
@@ -99,8 +100,8 @@ function add(group = false) {
     >
       <USelect
         :model-value="modelValue.match"
-        :items="[{ label: 'Match all (AND)', value: 'all' }, { label: 'Match any (OR)', value: 'any' }]"
-        aria-label="Group match"
+        :items="[{ label: t('assets.filterNode.matchAll'), value: 'all' }, { label: t('assets.filterNode.matchAny'), value: 'any' }]"
+        :aria-label="t('assets.filterNode.groupMatch')"
         @update:model-value="emit('update:modelValue', { ...modelValue, match: $event as 'all' | 'any' })"
       />
       <UButton
@@ -109,7 +110,7 @@ function add(group = false) {
         :disabled="ruleCount >= 50"
         @click="add()"
       >
-        Add rule
+        {{ t('assets.filterNode.addRule') }}
       </UButton>
       <UButton
         size="xs"
@@ -117,16 +118,16 @@ function add(group = false) {
         :disabled="depth >= 5 || ruleCount >= 50"
         @click="add(true)"
       >
-        Add group
+        {{ t('assets.filterNode.addGroup') }}
       </UButton>
       <UButton
         size="xs"
         color="neutral"
         variant="ghost"
-        aria-label="Remove group"
+        :aria-label="t('assets.filterNode.removeGroup')"
         @click="emit('remove')"
       >
-        Remove group
+        {{ t('assets.filterNode.removeGroup') }}
       </UButton>
     </div>
     <template v-if="modelValue.kind === 'group'">
@@ -153,14 +154,14 @@ function add(group = false) {
         :model-value="selectedField"
         :items="fieldOptions"
         value-key="value"
-        aria-label="Rule field"
+        :aria-label="t('assets.filterNode.ruleField')"
         class="w-full sm:w-56"
         @update:model-value="chooseField($event)"
       />
       <USelect
         :model-value="modelValue.operator"
         :items="comparisonOptions"
-        aria-label="Rule comparison"
+        :aria-label="t('assets.filterNode.ruleComparison')"
         @update:model-value="operator($event)"
       />
       <p
@@ -176,23 +177,23 @@ function add(group = false) {
           :items="values"
           value-key="value"
           multiple
-          aria-label="Rule values"
-          placeholder="Select values"
+          :aria-label="t('assets.filterNode.ruleValues')"
+          :placeholder="t('assets.filterNode.selectValues')"
           class="w-full sm:w-64"
           @update:model-value="patchRule({ values: $event })"
         />
         <select
           v-else-if="modelValue.data_type === 'boolean'"
           :value="String(modelValue.value)"
-          aria-label="Rule value"
+          :aria-label="t('assets.filterNode.ruleValue')"
           class="rounded-md border border-default bg-default p-2"
           @change="patchRule({ value: ($event.target as HTMLSelectElement).value === 'true' })"
         >
           <option value="true">
-            True
+            {{ t('assets.filterNode.true') }}
           </option>
           <option value="false">
-            False
+            {{ t('assets.filterNode.false') }}
           </option>
         </select>
         <input
@@ -200,8 +201,8 @@ function add(group = false) {
           :value="modelValue.value"
           :type="modelValue.data_type === 'number' ? 'number' : modelValue.data_type === 'date' ? 'date' : 'text'"
           step="any"
-          aria-label="Rule value"
-          placeholder="Value"
+          :aria-label="t('assets.filterNode.ruleValue')"
+          :placeholder="t('assets.filterNode.value')"
           class="min-w-0 flex-1 rounded-md border border-default bg-default p-2 text-default"
           @input="setScalar($event)"
         >
@@ -210,8 +211,8 @@ function add(group = false) {
           :value="modelValue.upper"
           :type="modelValue.data_type === 'date' ? 'date' : 'number'"
           step="any"
-          aria-label="Upper bound"
-          placeholder="Upper bound"
+          :aria-label="t('assets.filterNode.upperBound')"
+          :placeholder="t('assets.filterNode.upperBound')"
           class="min-w-0 flex-1 rounded-md border border-default bg-default p-2 text-default"
           @input="setScalar($event, true)"
         >
@@ -220,16 +221,16 @@ function add(group = false) {
         size="xs"
         color="neutral"
         variant="ghost"
-        aria-label="Remove rule"
+        :aria-label="t('assets.filterNode.removeRule')"
         @click="emit('remove')"
       >
-        Remove rule
+        {{ t('assets.filterNode.removeRule') }}
       </UButton>
       <p
         v-if="stale"
         class="w-full text-sm text-error"
       >
-        This attribute is unavailable or its type changed. Choose the field again or remove this rule.
+        {{ t('assets.filterNode.staleAttribute') }}
       </p>
     </div>
     <p

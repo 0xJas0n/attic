@@ -5,6 +5,7 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const apiFetch = useApiFetch()
 
@@ -75,12 +76,12 @@ async function deleteCondition() {
     await apiFetch(`/api/conditions/${conditionToDelete.value.id}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Condition deleted', color: 'success' })
+    toast.add({ title: t('admin.conditions.deleted'), color: 'success' })
     deleteModalOpen.value = false
     conditionToDelete.value = null
     refresh()
   } catch {
-    toast.add({ title: 'Failed to delete condition', color: 'error' })
+    toast.add({ title: t('admin.conditions.deleteFailed'), color: 'error' })
   }
 }
 
@@ -152,13 +153,13 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-          Asset vocabulary
+          {{ t('admin.conditions.eyebrow') }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          Conditions
+          {{ t('admin.conditions.title') }}
         </h1>
         <p class="mt-1 text-sm text-muted">
-          Keep a consistent quality scale across the entire collection.
+          {{ t('admin.conditions.subtitle') }}
         </p>
       </div>
       <UButton
@@ -166,7 +167,7 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
         icon="i-lucide-plus"
         class="rounded-xl font-bold shadow-primary"
       >
-        New condition
+        {{ t('admin.conditions.newCondition') }}
       </UButton>
     </header>
 
@@ -174,16 +175,16 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
     <div class="attic-panel flex flex-col gap-3 rounded-[18px] p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
       <div>
         <p class="font-extrabold text-mist-950 dark:text-white">
-          Condition scale
+          {{ t('admin.conditions.scale') }}
         </p>
         <p class="text-xs text-muted">
-          {{ conditions?.length || 0 }} quality levels, displayed in sort order.
+          {{ t('admin.conditions.levelCount', { count: conditions?.length || 0 }) }}
         </p>
       </div>
       <UInput
         v-model="searchQuery"
         icon="i-lucide-search"
-        placeholder="Search label or code"
+        :placeholder="t('admin.conditions.searchPlaceholder')"
         class="w-full sm:w-64"
         size="lg"
       />
@@ -214,13 +215,13 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
           />
         </div>
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No conditions yet
+          {{ t('admin.conditions.emptyTitle') }}
         </h3>
         <p class="text-sm text-muted mb-4 max-w-sm">
-          Create your first condition to start tracking the quality of your assets.
+          {{ t('admin.conditions.emptyBody') }}
         </p>
         <UButton to="/conditions/new">
-          Create Condition
+          {{ t('admin.conditions.create') }}
         </UButton>
       </div>
 
@@ -234,10 +235,10 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
           class="w-12 h-12 text-mist-300 mb-4"
         />
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No results found
+          {{ t('admin.conditions.noResults') }}
         </h3>
         <p class="text-sm text-muted">
-          No conditions match "{{ searchQuery }}"
+          {{ t('admin.conditions.noMatch', { query: searchQuery }) }}
         </p>
       </div>
 
@@ -248,19 +249,19 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
             <thead class="bg-mist-50/50 dark:bg-mist-700/30 border-b border-mist-100 dark:border-mist-700">
               <tr>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Condition
+                  {{ t('admin.conditions.colCondition') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Code
+                  {{ t('admin.conditions.colCode') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Description
+                  {{ t('admin.conditions.colDescription') }}
                 </th>
                 <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-muted">
-                  Order
+                  {{ t('admin.conditions.colOrder') }}
                 </th>
                 <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-muted">
-                  Actions
+                  {{ t('admin.conditions.colActions') }}
                 </th>
               </tr>
             </thead>
@@ -307,7 +308,7 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
                     v-else
                     class="text-sm text-mist-300 dark:text-mist-600 italic"
                   >
-                    No description
+                    {{ t('admin.conditions.noDescription') }}
                   </span>
                 </td>
 
@@ -327,7 +328,7 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
                     <NuxtLink
                       :to="`/conditions/${condition.id}/edit`"
                       class="flex size-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-attic-500/10 hover:text-attic-500"
-                      title="Edit"
+                      :title="t('admin.conditions.edit')"
                     >
                       <UIcon
                         name="i-lucide-edit"
@@ -336,7 +337,7 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
                     </NuxtLink>
                     <button
                       class="flex size-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                      title="Delete"
+                      :title="t('admin.conditions.delete')"
                       @click="confirmDelete(condition)"
                     >
                       <UIcon
@@ -354,9 +355,9 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
         <!-- Footer with Pagination -->
         <div class="px-6 py-3 border-t border-mist-100 dark:border-mist-700 bg-mist-50/50 dark:bg-mist-700/20 flex items-center justify-between">
           <p class="text-xs text-muted">
-            Showing {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredConditions.length) }} of {{ filteredConditions.length }} conditions
+            {{ t('admin.conditions.showing', { from: (currentPage - 1) * itemsPerPage + 1, to: Math.min(currentPage * itemsPerPage, filteredConditions.length), total: filteredConditions.length }) }}
             <span v-if="searchQuery && conditions?.length !== filteredConditions.length">
-              (filtered from {{ conditions?.length || 0 }})
+              {{ t('admin.conditions.filteredFrom', { total: conditions?.length || 0 }) }}
             </span>
           </p>
           <div
@@ -368,17 +369,17 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
               :disabled="currentPage === 1"
               @click="prevPage"
             >
-              Prev
+              {{ t('admin.conditions.prev') }}
             </button>
             <span class="text-xs text-muted px-2">
-              Page {{ currentPage }} of {{ totalPages }}
+              {{ t('admin.conditions.page', { page: currentPage, pages: totalPages }) }}
             </span>
             <button
               class="px-3 py-1.5 text-xs font-medium border border-mist-200 dark:border-mist-600 rounded-lg hover:bg-mist-100 dark:hover:bg-mist-700 text-mist-600 dark:text-mist-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               :disabled="currentPage === totalPages"
               @click="nextPage"
             >
-              Next
+              {{ t('admin.conditions.next') }}
             </button>
           </div>
         </div>
@@ -388,8 +389,8 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
     <!-- Delete Confirmation Modal -->
     <UModal
       v-model:open="deleteModalOpen"
-      title="Delete Condition"
-      description="Confirm deletion of this condition and review the impact on assets that use it."
+      :title="t('admin.conditions.deleteTitle')"
+      :description="t('admin.conditions.deleteDescription')"
     >
       <template #content>
         <div class="max-w-md rounded-[20px] bg-white p-6 shadow-xl dark:bg-mist-800">
@@ -402,10 +403,10 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
             </div>
             <div class="flex-1">
               <h3 class="text-lg font-bold text-mist-950 dark:text-white">
-                Delete Condition
+                {{ t('admin.conditions.deleteTitle') }}
               </h3>
               <p class="text-sm text-muted mt-2">
-                Are you sure you want to delete <strong>{{ conditionToDelete?.label }}</strong>? This may affect assets using this condition.
+                {{ t('admin.conditions.deleteConfirm', { label: conditionToDelete?.label }) }}
               </p>
             </div>
           </div>
@@ -415,13 +416,13 @@ function getConditionStyle(condition: Condition): { icon: string, bgColor: strin
               color="neutral"
               @click="deleteModalOpen = false"
             >
-              Cancel
+              {{ t('admin.conditions.cancel') }}
             </UButton>
             <UButton
               color="error"
               @click="deleteCondition"
             >
-              Delete
+              {{ t('admin.conditions.deleteButton') }}
             </UButton>
           </div>
         </div>

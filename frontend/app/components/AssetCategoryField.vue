@@ -13,6 +13,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | undefined]
 }>()
 
+const { t } = useI18n()
+
 const selection = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value)
@@ -20,7 +22,7 @@ const selection = computed({
 
 const rows = computed(() => buildCategoryTreeRows(props.categories))
 const options = computed(() => [
-  { label: 'No category', value: undefined, icon: 'i-lucide-inbox' },
+  { label: t('assets.categoryField.none'), value: undefined, icon: 'i-lucide-inbox' },
   ...rows.value.map(row => ({
     label: [...row.ancestors, row.category].map(category => category.name).join(' / '),
     value: row.category.id,
@@ -50,27 +52,27 @@ const availableFieldCount = computed(() => directFieldCount.value + inheritedFie
           for="asset-category"
           class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400"
         >
-          Category <span class="normal-case font-medium text-muted">(optional)</span>
+          {{ t('assets.categoryField.label') }} <span class="normal-case font-medium text-muted">({{ t('assets.categoryField.optional') }})</span>
         </label>
         <p class="mt-1 text-xs text-muted">
-          Choose the most specific category that fits this asset.
+          {{ t('assets.categoryField.hint') }}
         </p>
       </div>
       <NuxtLink
         to="/categories"
         class="text-xs font-bold text-attic-500 hover:text-attic-600 hover:underline"
       >
-        Manage categories
+        {{ t('assets.categoryField.manage') }}
       </NuxtLink>
     </div>
 
     <USelectMenu
       id="asset-category"
       v-model="selection"
-      aria-label="Category"
+      :aria-label="t('assets.categoryField.label')"
       :items="options"
       value-key="value"
-      placeholder="Search or choose a category"
+      :placeholder="t('assets.categoryField.placeholder')"
       icon="i-lucide-tags"
       size="lg"
       class="w-full"
@@ -105,16 +107,16 @@ const availableFieldCount = computed(() => directFieldCount.value + inheritedFie
               name="i-lucide-loader-2"
               class="size-3 animate-spin"
             />
-            Loading category fields…
+            {{ t('assets.categoryField.loadingFields') }}
           </span>
           <template v-else-if="availableFieldCount">
             <span class="font-semibold text-mist-700 dark:text-mist-200">
-              {{ directFieldCount }} own
+              {{ t('assets.categoryField.own', { count: directFieldCount }) }}
             </span>
             <template v-if="inheritedFieldCount">
               <span class="text-muted">+</span>
               <span class="font-semibold text-attic-600 dark:text-attic-300">
-                {{ inheritedFieldCount }} inherited
+                {{ t('assets.categoryField.inherited', { count: inheritedFieldCount }) }}
               </span>
             </template>
             <span class="text-muted">·</span>
@@ -122,14 +124,14 @@ const availableFieldCount = computed(() => directFieldCount.value + inheritedFie
               href="#category-fields"
               class="font-bold text-attic-600 hover:underline dark:text-attic-300"
             >
-              {{ availableFieldCount }} {{ availableFieldCount === 1 ? 'field' : 'fields' }} to complete
+              {{ t('assets.categoryField.fieldsToComplete', { count: availableFieldCount }, availableFieldCount) }}
             </a>
           </template>
           <span
             v-else
             class="text-muted"
           >
-            This category adds no extra fields.
+            {{ t('assets.categoryField.noExtraFields') }}
           </span>
         </div>
       </div>
@@ -139,21 +141,24 @@ const availableFieldCount = computed(() => directFieldCount.value + inheritedFie
       />
     </div>
 
-    <p
+    <i18n-t
       v-else-if="!categories.length"
+      keypath="assets.categoryField.noCategories"
+      tag="p"
       class="text-sm text-gray-400"
     >
-      No categories available. You can keep this asset uncategorized or
-      <NuxtLink
-        to="/categories/new"
-        class="text-attic-500 hover:underline"
-      >create one</NuxtLink>.
-    </p>
+      <template #create>
+        <NuxtLink
+          to="/categories/new"
+          class="text-attic-500 hover:underline"
+        >{{ t('assets.categoryField.createOne') }}</NuxtLink>
+      </template>
+    </i18n-t>
     <p
       v-else
       class="text-xs text-muted"
     >
-      Without a category, this asset will not have category-specific fields.
+      {{ t('assets.categoryField.withoutCategory') }}
     </p>
   </div>
 </template>

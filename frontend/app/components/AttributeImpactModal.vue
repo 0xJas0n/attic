@@ -15,6 +15,7 @@ interface Operation {
   deletedOptionCount?: number
 }
 const apiFetch = useApiFetch()
+const { t } = useI18n()
 const open = ref(false)
 const busy = ref(false)
 const error = ref('')
@@ -26,20 +27,20 @@ const hasOptionDeletions = computed(() => (operation.value?.deletedOptionCount |
 const hasOptionDraft = computed(() => Array.isArray(operation.value?.changes?.options))
 const destructive = computed(() => deleting.value || hasOptionDeletions.value)
 const noun = computed(() => operation.value?.action.endsWith('option') ? 'option' : 'field')
-const title = computed(() => `${deleting.value ? 'Delete' : 'Update'} ${noun.value}`)
+const title = computed(() => t(`catalog.impact.title${deleting.value ? 'Delete' : 'Update'}${noun.value === 'option' ? 'Option' : 'Field'}`))
 const message = computed(() => {
   const value = impact.value
-  if (!value) return 'Loading affected assets…'
+  if (!value) return t('catalog.impact.loading')
   const n = value.affected_assets
+  const kind = noun.value === 'option' ? 'Option' : 'Field'
   if (hasOptionDeletions.value) {
-    if (n === 0) return 'No assets use the options you deleted. Your other option changes will also be saved.'
-    return `${n} ${n === 1 ? 'asset uses' : 'assets use'} an option you changed. Deleted selections will be removed, and renamed values will be updated automatically.`
+    if (n === 0) return t('catalog.impact.optionDeletionsNone')
+    return t('catalog.impact.optionDeletions', { count: n }, n)
   }
-  const usage = n === 0 ? `No assets use this ${noun.value}.` : `This ${noun.value} is used by ${n} ${n === 1 ? 'asset' : 'assets'}`
-  if (deleting.value) return n === 0 ? usage : `${usage} and will be removed from ${n === 1 ? 'it' : 'all of them'}.`
-  if (n === 0) return usage
-  if (value.current !== value.proposed) return `${usage} and will be displayed as “${value.proposed}” in ${n === 1 ? 'it' : 'all of them'}.`
-  return `${usage}. The field configuration or stored value will be updated for ${n === 1 ? 'it' : 'all of them'}.`
+  if (n === 0) return t(`catalog.impact.noUse${kind}`)
+  if (deleting.value) return t(`catalog.impact.delete${kind}`, { count: n }, n)
+  if (value.current !== value.proposed) return t(`catalog.impact.rename${kind}`, { count: n, value: value.proposed }, n)
+  return t(`catalog.impact.config${kind}`, { count: n }, n)
 })
 async function preview() {
   const op = operation.value!
@@ -99,13 +100,13 @@ async function confirm() {
       impact.value = null
       try {
         await preview()
-        error.value = 'The affected assets or field changed. Review the updated details and confirm again.'
+        error.value = t('catalog.impact.changed')
       } catch (refreshError) { error.value = errorMessage(refreshError) }
     } else error.value = errorMessage(err)
   } finally { busy.value = false }
 }
 function errorMessage(err: unknown) {
-  return (err as { data?: { error?: string } }).data?.error || 'Unable to apply this change. Please try again.'
+  return (err as { data?: { error?: string } }).data?.error || t('catalog.impact.failed')
 }
 defineExpose({ run })
 </script>
@@ -114,7 +115,7 @@ defineExpose({ run })
   <UModal
     v-model:open="open"
     :title="title"
-    description="Review the affected assets before applying this change."
+    :description="t('catalog.impact.description')"
     :dismissible="!busy"
     :close="!busy"
   >
@@ -128,19 +129,19 @@ defineExpose({ run })
         </p>
         <p>{{ message }}</p>
         <p v-if="impact?.deleted_assets">
-          Includes {{ impact.deleted_assets }} deleted assets.
+          {{ t('catalog.impact.includesDeleted', { count: impact.deleted_assets }) }}
         </p>
         <p v-if="impact?.required_fields_left_empty">
-          {{ impact.required_fields_left_empty }} {{ impact.required_fields_left_empty === 1 ? 'asset will have no selection' : 'assets will have no selection' }}. Because this attribute is required, {{ impact.required_fields_left_empty === 1 ? 'it must be updated' : 'they must be updated' }} the next time {{ impact.required_fields_left_empty === 1 ? 'it is' : 'they are' }} saved.
+          {{ t('catalog.impact.requiredEmpty', { count: impact.required_fields_left_empty }, impact.required_fields_left_empty) }}
         </p>
         <p v-if="deleting">
-          This cannot be undone through this dialog.
+          {{ t('catalog.impact.irreversible') }}
         </p>
         <p v-if="deleting && noun === 'option'">
-          Other selections in multi-select fields will be retained.
+          {{ t('catalog.impact.multiRetained') }}
         </p>
         <p v-if="!deleting && !hasOptionDraft && (operation?.changes?.value || operation?.changes?.key)">
-          Any changed stored values or keys will also be updated on the affected assets.
+          {{ t('catalog.impact.keysUpdated') }}
         </p>
         <p
           v-if="error"
@@ -158,14 +159,14 @@ defineExpose({ run })
         :disabled="busy"
         @click="open = false"
       >
-        Cancel
+        {{ t('catalog.shared.cancel') }}
       </UButton>
       <UButton
         :color="destructive ? 'error' : 'primary'"
         :loading="busy"
         @click="confirm"
       >
-        {{ impact ? title : 'Retry preview' }}
+        {{ impact ? title : t('catalog.impact.retry') }}
       </UButton>
     </template>
   </UModal>

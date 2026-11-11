@@ -6,6 +6,7 @@ definePageMeta({
 })
 
 const router = useRouter()
+const { t } = useI18n()
 const toast = useToast()
 const apiFetch = useApiFetch()
 
@@ -51,16 +52,16 @@ const saving = ref(false)
 const descriptionCount = computed(() => form.description.length)
 
 // Preset conditions for quick selection
-const presets = [
-  { label: 'New', code: 'NEW', icon: 'i-lucide-sparkles', color: 'emerald' },
-  { label: 'Like New', code: 'LIKE_NEW', icon: 'i-lucide-star', color: 'teal' },
-  { label: 'Good', code: 'GOOD', icon: 'i-lucide-thumbs-up', color: 'blue' },
-  { label: 'Fair', code: 'FAIR', icon: 'i-lucide-minus', color: 'amber' },
-  { label: 'Poor', code: 'POOR', icon: 'i-lucide-alert-triangle', color: 'orange' },
-  { label: 'For Parts', code: 'FOR_PARTS', icon: 'i-lucide-wrench', color: 'red' }
-]
+const presets = computed(() => [
+  { label: t('admin.conditions.presets.new'), code: 'NEW', icon: 'i-lucide-sparkles', color: 'emerald' },
+  { label: t('admin.conditions.presets.likeNew'), code: 'LIKE_NEW', icon: 'i-lucide-star', color: 'teal' },
+  { label: t('admin.conditions.presets.good'), code: 'GOOD', icon: 'i-lucide-thumbs-up', color: 'blue' },
+  { label: t('admin.conditions.presets.fair'), code: 'FAIR', icon: 'i-lucide-minus', color: 'amber' },
+  { label: t('admin.conditions.presets.poor'), code: 'POOR', icon: 'i-lucide-alert-triangle', color: 'orange' },
+  { label: t('admin.conditions.presets.forParts'), code: 'FOR_PARTS', icon: 'i-lucide-wrench', color: 'red' }
+])
 
-function applyPreset(preset: typeof presets[0]) {
+function applyPreset(preset: (typeof presets.value)[number]) {
   form.label = preset.label
   form.code = preset.code
   isCodeManuallyEdited.value = true
@@ -69,11 +70,11 @@ function applyPreset(preset: typeof presets[0]) {
 // Save condition
 async function saveCondition() {
   if (!form.label.trim()) {
-    toast.add({ title: 'Please enter a condition label', color: 'error' })
+    toast.add({ title: t('admin.conditions.labelRequired'), color: 'error' })
     return
   }
   if (!form.code.trim()) {
-    toast.add({ title: 'Please enter a condition code', color: 'error' })
+    toast.add({ title: t('admin.conditions.codeRequired'), color: 'error' })
     return
   }
 
@@ -89,10 +90,10 @@ async function saveCondition() {
       })
     })
 
-    toast.add({ title: 'Condition created successfully', color: 'success' })
+    toast.add({ title: t('admin.conditions.created'), color: 'success' })
     router.push('/conditions')
   } catch {
-    toast.add({ title: 'Failed to create condition', color: 'error' })
+    toast.add({ title: t('admin.conditions.createFailed'), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -114,27 +115,27 @@ function cancel() {
             to="/"
             class="hover:text-attic-500 transition-colors"
           >
-            Home
+            {{ t('admin.conditions.home') }}
           </NuxtLink>
           <span class="mx-2 text-mist-300 dark:text-mist-600">/</span>
           <NuxtLink
             to="/conditions"
             class="hover:text-attic-500 transition-colors"
           >
-            Conditions
+            {{ t('admin.conditions.title') }}
           </NuxtLink>
           <span class="mx-2 text-mist-300 dark:text-mist-600">/</span>
-          <span class="font-bold text-attic-500">New</span>
+          <span class="font-bold text-attic-500">{{ t('admin.conditions.crumbNew') }}</span>
         </nav>
         <div>
           <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-            Condition editor
+            {{ t('admin.conditions.editor') }}
           </p>
           <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-            New condition
+            {{ t('admin.conditions.newTitle') }}
           </h1>
           <p class="mt-1 text-sm text-muted">
-            Define a new quality level to describe the state of your assets.
+            {{ t('admin.conditions.newSubtitle') }}
           </p>
         </div>
       </div>
@@ -145,7 +146,7 @@ function cancel() {
           class="rounded-xl font-semibold"
           @click="cancel"
         >
-          Cancel
+          {{ t('admin.conditions.cancel') }}
         </UButton>
         <UButton
           icon="i-lucide-save"
@@ -153,7 +154,7 @@ function cancel() {
           class="rounded-xl font-bold shadow-primary"
           @click="saveCondition"
         >
-          Save Condition
+          {{ t('admin.conditions.saveCondition') }}
         </UButton>
       </div>
     </div>
@@ -171,9 +172,9 @@ function cancel() {
           </div>
           <div>
             <h2 class="font-extrabold text-mist-950 dark:text-white">
-              Quick start
+              {{ t('admin.conditions.quickStart') }}
             </h2><p class="text-xs text-muted">
-              Choose a common quality level or create your own.
+              {{ t('admin.conditions.quickStartHint') }}
             </p>
           </div>
         </div>
@@ -206,9 +207,9 @@ function cancel() {
             />
           </div><div>
             <h2 class="font-extrabold text-mist-950 dark:text-white">
-              Condition details
+              {{ t('admin.conditions.details') }}
             </h2><p class="text-xs text-muted">
-              Set the label, stable code, and position in the scale.
+              {{ t('admin.conditions.detailsHint') }}
             </p>
           </div>
         </div>
@@ -216,23 +217,23 @@ function cancel() {
           <!-- Label Field -->
           <div>
             <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-              Condition Label
+              {{ t('admin.conditions.label') }}
             </label>
             <input
               v-model="form.label"
               type="text"
-              placeholder="e.g. Like New"
+              :placeholder="t('admin.conditions.labelPlaceholder')"
               class="w-full px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all placeholder:text-dimmed font-medium text-mist-950 dark:text-white"
             >
             <p class="text-xs text-muted mt-1">
-              The display name shown when selecting a condition.
+              {{ t('admin.conditions.labelHint') }}
             </p>
           </div>
 
           <!-- Code Field -->
           <div>
             <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-              Condition Code
+              {{ t('admin.conditions.code') }}
             </label>
             <input
               v-model="form.code"
@@ -242,21 +243,21 @@ function cancel() {
               @input="onCodeInput"
             >
             <p class="text-xs text-muted mt-1">
-              A unique uppercase identifier. Auto-generated from label.
+              {{ t('admin.conditions.codeHint') }}
             </p>
           </div>
 
           <!-- Description Field -->
           <div>
             <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-              Description
-              <span class="font-normal text-muted">(optional)</span>
+              {{ t('admin.conditions.description') }}
+              <span class="font-normal text-muted">{{ t('admin.conditions.optional') }}</span>
             </label>
             <textarea
               v-model="form.description"
               rows="3"
               maxlength="200"
-              placeholder="Describe what this condition means..."
+              :placeholder="t('admin.conditions.descriptionPlaceholder')"
               class="w-full px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all placeholder:text-dimmed text-sm resize-none text-mist-950 dark:text-white"
             />
             <div class="flex justify-end mt-1">
@@ -267,7 +268,7 @@ function cancel() {
           <!-- Sort Order Field -->
           <div>
             <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-              Sort Order
+              {{ t('admin.conditions.sortOrder') }}
             </label>
             <input
               v-model.number="form.sort_order"
@@ -276,7 +277,7 @@ function cancel() {
               class="w-32 px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all text-sm text-mist-950 dark:text-white"
             >
             <p class="text-xs text-muted mt-1">
-              Controls the display order. Lower numbers appear first.
+              {{ t('admin.conditions.sortOrderHint') }}
             </p>
           </div>
         </div>
@@ -291,10 +292,10 @@ function cancel() {
           />
           <div>
             <p class="text-sm font-semibold text-attic-700 dark:text-attic-300">
-              Pro Tip
+              {{ t('admin.conditions.tipTitle') }}
             </p>
             <p class="text-sm text-attic-600 dark:text-attic-400 mt-1">
-              Common condition scales range from "New" to "For Parts/Repair". You can customize these to match your needs, such as "Sealed" for collectibles or "Restored" for antiques.
+              {{ t('admin.conditions.tipBody') }}
             </p>
           </div>
         </div>
@@ -306,7 +307,7 @@ function cancel() {
           color="neutral"
           @click="cancel"
         >
-          Cancel
+          {{ t('admin.conditions.cancel') }}
         </UButton>
         <UButton
           icon="i-lucide-save"
@@ -314,7 +315,7 @@ function cancel() {
           class="rounded-xl shadow-primary"
           @click="saveCondition"
         >
-          Save condition
+          {{ t('admin.conditions.saveConditionLower') }}
         </UButton>
       </div>
     </div>

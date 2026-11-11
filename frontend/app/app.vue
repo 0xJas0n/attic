@@ -9,12 +9,13 @@ useHead({
     { rel: 'icon', href: '/favicon.ico' }
   ],
   htmlAttrs: {
-    lang: 'en'
+    lang: computed(() => locale.value)
   }
 })
 
-const title = 'Attic - Home Inventory'
-const description = 'A self-hosted home inventory for your belongings, rooms, warranties, receipts, and collections.'
+const { t, locale } = useI18n()
+const title = computed(() => t('shell.meta.title'))
+const description = computed(() => t('shell.meta.description'))
 
 useSeoMeta({
   title,
@@ -44,7 +45,7 @@ type AppInfo = {
 const { data: appInfo, execute: fetchAppInfo } = useApi<AppInfo>('/api/', {
   immediate: false
 })
-const softwareVersion = computed(() => appInfo.value?.version || 'unknown')
+const softwareVersion = computed(() => appInfo.value?.version || t('shell.unknown'))
 const apiDocsUrl = computed(() => `${config.public.apiBase || ''}/api/docs`)
 
 watch(loggedIn, (isLoggedIn) => {
@@ -87,24 +88,24 @@ watch([() => route.path, featuresLoaded, features], ([path, loaded]) => {
   if (match && !features.value[match[1]]) void navigateTo('/')
 }, { immediate: true, deep: true })
 
-const baseNavigation = [
-  { label: 'Dashboard', to: '/', icon: 'i-lucide-layout-dashboard' },
-  { label: 'All Assets', to: '/assets', icon: 'i-lucide-package' },
-  { label: 'Locations', to: '/locations', icon: 'i-lucide-map-pin' },
-  { label: 'Collections', to: '/collections', icon: 'i-lucide-library' },
-  { label: 'Tags', to: '/tags', icon: 'i-lucide-tags' },
-  { label: 'Categories', to: '/categories', icon: 'i-lucide-shapes' }
-]
+const baseNavigation = computed(() => [
+  { label: t('shell.nav.dashboard'), to: '/', icon: 'i-lucide-layout-dashboard' },
+  { label: t('shell.nav.allAssets'), to: '/assets', icon: 'i-lucide-package' },
+  { label: t('shell.nav.locations'), to: '/locations', icon: 'i-lucide-map-pin' },
+  { label: t('shell.nav.collections'), to: '/collections', icon: 'i-lucide-library' },
+  { label: t('shell.nav.tags'), to: '/tags', icon: 'i-lucide-tags' },
+  { label: t('shell.nav.categories'), to: '/categories', icon: 'i-lucide-shapes' }
+])
 
-const secondaryNavigation = [
-  { label: 'Attributes', to: '/attributes', icon: 'i-lucide-sliders-horizontal' },
-  { label: 'Conditions', to: '/conditions', icon: 'i-lucide-activity' },
-  { label: 'Warranties', to: '/warranties', icon: 'i-lucide-shield-check' },
-  { label: 'Import sources', to: '/plugins', icon: 'i-lucide-puzzle' }
-]
+const secondaryNavigation = computed(() => [
+  { label: t('shell.nav.attributes'), to: '/attributes', icon: 'i-lucide-sliders-horizontal' },
+  { label: t('shell.nav.conditions'), to: '/conditions', icon: 'i-lucide-activity' },
+  { label: t('shell.nav.warranties'), to: '/warranties', icon: 'i-lucide-shield-check' },
+  { label: t('shell.nav.importSources'), to: '/plugins', icon: 'i-lucide-puzzle' }
+])
 
 const navigation = computed(() => {
-  const items = baseNavigation.filter((item) => {
+  const items = baseNavigation.value.filter((item) => {
     if (item.to === '/locations') return features.value.locations
     if (item.to === '/collections') return features.value.collections
     if (item.to === '/tags') return features.value.tags
@@ -115,7 +116,7 @@ const navigation = computed(() => {
 })
 
 const secondaryNav = computed(() => {
-  const items = secondaryNavigation.filter((item) => {
+  const items = secondaryNavigation.value.filter((item) => {
     if (item.to === '/attributes') return features.value.categories
     if (item.to === '/conditions') return features.value.conditions
     if (item.to === '/warranties') return features.value.warranties
@@ -123,8 +124,8 @@ const secondaryNav = computed(() => {
     return true
   })
   if (isAdmin.value) {
-    items.push({ label: 'Users', to: '/users', icon: 'i-lucide-users' })
-    items.push({ label: 'Settings', to: '/settings', icon: 'i-lucide-settings' })
+    items.push({ label: t('shell.nav.users'), to: '/users', icon: 'i-lucide-users' })
+    items.push({ label: t('shell.nav.settings'), to: '/settings', icon: 'i-lucide-settings' })
   }
   return items
 })
@@ -147,21 +148,21 @@ type DropdownMenuItem = {
 const userMenuItems = computed(() => {
   const items: DropdownMenuItem[][] = [
     [{
-      label: user.value?.email || 'User',
+      label: user.value?.email || t('shell.user'),
       slot: 'account',
       disabled: true
     }]
   ]
 
   items.push([{
-    label: 'Profile',
+    label: t('shell.profile'),
     icon: 'i-lucide-user-round',
     onSelect: () => { navigateTo('/profile') }
   }])
 
   if (!isAuthDisabled.value) {
     items.push([{
-      label: 'Sign out',
+      label: t('shell.signOut'),
       icon: 'i-lucide-log-out',
       onSelect: () => logout()
     }])
@@ -204,7 +205,7 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
                   Attic
                 </h1>
                 <p class="text-muted dark:text-mist-400 text-[11px] font-semibold tracking-wide uppercase mt-1">
-                  Home inventory
+                  {{ t('shell.tagline') }}
                 </p>
               </div>
             </NuxtLink>
@@ -212,7 +213,7 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
             <!-- Navigation -->
             <nav class="space-y-1">
               <p class="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-muted">
-                Your home
+                {{ t('shell.section.home') }}
               </p>
               <NuxtLink
                 v-for="item in navigation"
@@ -238,10 +239,10 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
               <div
                 v-if="pinnedSavedSearches.length"
                 class="mt-4 space-y-1 border-l border-mist-200 pl-3 dark:border-mist-700"
-                aria-label="Pinned saved searches"
+                :aria-label="t('shell.pinnedSavedSearches')"
               >
                 <p class="px-2 pb-1 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">
-                  Saved searches
+                  {{ t('shell.savedSearches') }}
                 </p>
                 <NuxtLink
                   v-for="search in pinnedSavedSearches"
@@ -264,7 +265,7 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
               <!-- Divider -->
               <div class="pt-5 mt-5 border-t border-mist-100 dark:border-mist-800">
                 <p class="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-muted">
-                  Manage
+                  {{ t('shell.section.manage') }}
                 </p>
                 <NuxtLink
                   v-for="item in secondaryNav"
@@ -292,6 +293,7 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
 
           <!-- User section at bottom -->
           <div class="mt-auto p-4 border-t border-mist-100 dark:border-mist-800">
+            <LanguageSwitcher class="mb-3 w-full" />
             <div class="flex items-center gap-3 p-2 rounded-2xl bg-mist-50/80 dark:bg-mist-800/70">
               <div class="w-9 h-9 rounded-xl bg-attic-100 dark:bg-attic-500/20 flex items-center justify-center text-attic-600 dark:text-attic-300">
                 <UIcon
@@ -301,7 +303,7 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
               </div>
               <div class="flex flex-col flex-1 min-w-0">
                 <span class="text-sm font-bold text-mist-950 dark:text-white truncate">
-                  {{ user?.name || user?.email?.split('@')[0] || 'User' }}
+                  {{ user?.name || user?.email?.split('@')[0] || t('shell.user') }}
                 </span>
                 <span class="text-xs text-muted dark:text-gray-400 truncate">
                   {{ user?.email }}
@@ -313,13 +315,13 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
                   variant="ghost"
                   icon="i-lucide-settings"
                   size="sm"
-                  aria-label="Open account menu"
-                  title="Open account menu"
+                  :aria-label="t('shell.openAccountMenu')"
+                  :title="t('shell.openAccountMenu')"
                 />
                 <template #account>
                   <div class="text-left">
                     <p class="font-medium">
-                      {{ user?.name || 'User' }}
+                      {{ user?.name || t('shell.user') }}
                     </p>
                     <p class="text-xs text-muted truncate">
                       {{ user?.email }}
@@ -362,7 +364,7 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
                     Attic
                   </h1>
                   <p class="text-muted dark:text-gray-400 text-xs font-medium">
-                    Home inventory
+                    {{ t('shell.tagline') }}
                   </p>
                 </div>
               </NuxtLink>
@@ -370,8 +372,8 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
                 color="neutral"
                 variant="ghost"
                 icon="i-lucide-x"
-                aria-label="Close navigation"
-                title="Close navigation"
+                :aria-label="t('shell.closeNavigation')"
+                :title="t('shell.closeNavigation')"
                 @click="sidebarOpen = false"
               />
             </div>
@@ -428,7 +430,7 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
           <div class="shrink-0 p-6 border-t border-gray-100 dark:border-gray-800">
             <NuxtLink
               to="/profile"
-              aria-label="Profile"
+              :aria-label="t('shell.profile')"
               class="flex items-center gap-3 rounded-xl p-2 -m-2 transition-colors hover:bg-mist-50 focus-visible:outline-2 focus-visible:outline-attic-500 dark:hover:bg-mist-800"
               :aria-current="route.path === '/profile' ? 'page' : undefined"
               @click="sidebarOpen = false"
@@ -441,12 +443,12 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
               </div>
               <div class="flex flex-col flex-1 min-w-0">
                 <span class="text-sm font-bold text-mist-950 dark:text-white truncate">
-                  {{ user?.name || user?.email?.split('@')[0] || 'User' }}
+                  {{ user?.name || user?.email?.split('@')[0] || t('shell.user') }}
                 </span>
                 <span class="text-xs text-muted dark:text-gray-400 truncate">
                   {{ user?.email }}
                 </span>
-                <span class="mt-1 text-xs font-semibold text-attic-600 dark:text-attic-300">View profile</span>
+                <span class="mt-1 text-xs font-semibold text-attic-600 dark:text-attic-300">{{ t('shell.viewProfile') }}</span>
               </div>
               <UIcon
                 name="i-lucide-chevron-right"
@@ -464,8 +466,8 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
               color="neutral"
               variant="ghost"
               icon="i-lucide-menu"
-              aria-label="Open navigation"
-              title="Open navigation"
+              :aria-label="t('shell.openNavigation')"
+              :title="t('shell.openNavigation')"
               @click="sidebarOpen = true"
             />
 
@@ -482,7 +484,10 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
               <span class="font-extrabold text-mist-950 dark:text-white">Attic</span>
             </NuxtLink>
 
-            <UColorModeButton />
+            <div class="flex items-center gap-2">
+              <LanguageSwitcher />
+              <UColorModeButton />
+            </div>
           </header>
 
           <!-- Scrollable content -->
@@ -496,17 +501,17 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
                   class="mx-auto max-w-lg rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/60 dark:bg-red-950/20"
                 >
                   <h2 class="font-extrabold text-mist-950 dark:text-white">
-                    Feature settings could not be loaded
+                    {{ t('shell.errors.featuresTitle') }}
                   </h2>
                   <p class="mt-2 text-sm text-muted">
-                    Try again before continuing to your inventory.
+                    {{ t('shell.errors.featuresBody') }}
                   </p>
                   <UButton
                     class="mt-4"
                     icon="i-lucide-refresh-cw"
                     @click="retryFeatureLoad"
                   >
-                    Try again
+                    {{ t('common.tryAgain') }}
                   </UButton>
                 </div>
                 <div
@@ -515,17 +520,17 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
                   class="mx-auto max-w-lg rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/60 dark:bg-red-950/20"
                 >
                   <h2 class="font-extrabold text-mist-950 dark:text-white">
-                    Currency settings could not be loaded
+                    {{ t('shell.errors.currencyTitle') }}
                   </h2>
                   <p class="mt-2 text-sm text-muted">
-                    Prices are hidden until your organization’s currency is available.
+                    {{ t('shell.errors.currencyBody') }}
                   </p>
                   <UButton
                     class="mt-4"
                     icon="i-lucide-refresh-cw"
                     @click="loadOrganizationSettings"
                   >
-                    Try again
+                    {{ t('common.tryAgain') }}
                   </UButton>
                 </div>
                 <p
@@ -533,12 +538,12 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
                   role="status"
                   class="p-6 text-center text-sm text-muted"
                 >
-                  Loading currency settings…
+                  {{ t('shell.loadingCurrency') }}
                 </p>
               </div>
 
               <footer class="shrink-0 pt-6 text-center text-xs font-medium text-muted dark:text-mist-400">
-                <span>Attic version {{ softwareVersion }}</span>
+                <span>{{ t('shell.version', { version: softwareVersion }) }}</span>
                 <span class="mx-2 text-mist-300 dark:text-mist-600">·</span>
                 <a
                   :href="apiDocsUrl"
@@ -557,8 +562,8 @@ const isAssetForm = computed(() => /^\/assets\/(?:new|[^/]+\/edit)\/?$/.test(rou
         <NuxtLink
           v-if="!isAssetForm && !['/plugins', '/profile', '/api-keys'].includes(route.path.replace(/\/$/, ''))"
           to="/assets/new"
-          aria-label="Add asset"
-          title="Add asset"
+          :aria-label="t('shell.addAsset')"
+          :title="t('shell.addAsset')"
           class="lg:hidden fixed bottom-6 right-6 size-14 rounded-2xl bg-attic-500 text-white shadow-primary flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50"
         >
           <UIcon

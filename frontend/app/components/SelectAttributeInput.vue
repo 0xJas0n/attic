@@ -3,6 +3,7 @@ import type { Attribute } from '~/types/api'
 
 const props = defineProps<{ attribute: Attribute, modelValue?: unknown, required?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string | string[] | undefined] }>()
+const { t } = useI18n()
 const single = computed(() => typeof props.modelValue === 'string' && props.modelValue ? props.modelValue : undefined)
 const multiple = computed(() => Array.isArray(props.modelValue) ? props.modelValue.filter((v): v is string => typeof v === 'string') : [])
 function remove(value: string) {
@@ -23,7 +24,7 @@ function label(value: string) {
       value-key="value"
       multiple
       :aria-label="attribute.name"
-      :placeholder="`Select ${attribute.name.toLowerCase()}`"
+      :placeholder="t('catalog.selectAttribute.placeholder', { name: attribute.name.toLowerCase() })"
       class="w-full"
       @update:model-value="emit('update:modelValue', $event)"
     />
@@ -34,7 +35,7 @@ function label(value: string) {
       :items="attribute.options || []"
       value-key="value"
       :aria-label="attribute.name"
-      :placeholder="`Select ${attribute.name.toLowerCase()}`"
+      :placeholder="t('catalog.selectAttribute.placeholder', { name: attribute.name.toLowerCase() })"
       class="w-full"
       @update:model-value="emit('update:modelValue', $event)"
     />
@@ -48,7 +49,7 @@ function label(value: string) {
         size="xs"
         variant="soft"
         trailing-icon="i-lucide-x"
-        :aria-label="`Remove ${label(value)}`"
+        :aria-label="t('catalog.selectAttribute.remove', { name: label(value) })"
         @click="remove(value)"
       >
         {{ label(value) }}
@@ -60,7 +61,7 @@ function label(value: string) {
       variant="link"
       @click="emit('update:modelValue', undefined)"
     >
-      Clear selection
+      {{ t('catalog.selectAttribute.clear') }}
     </UButton>
   </div>
 </template>

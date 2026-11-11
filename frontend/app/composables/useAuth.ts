@@ -25,6 +25,7 @@ interface LoginResponse {
 }
 
 export function useAuth() {
+  const i18nT = (key: string, fallback: string) => useNuxtApp().$i18n?.t(key) || fallback
   const session = useState<AuthSession | null>('auth-session', () => null)
   const loading = useState<boolean>('auth-loading', () => true)
   const config = useRuntimeConfig()
@@ -58,7 +59,7 @@ export function useAuth() {
       return data
     } catch (error: unknown) {
       const err = error as { data?: { error?: string }, message?: string }
-      const message = err?.data?.error || err?.message || 'Login failed'
+      const message = err?.data?.error || err?.message || i18nT('misc.auth.loginFailed', 'Login failed')
       return { success: false, error: message }
     }
   }
@@ -108,7 +109,7 @@ export function useAuth() {
       return { success: true }
     } catch (error: unknown) {
       const err = error as { data?: { error?: string }, message?: string }
-      const message = err?.data?.error || err?.message || 'Password change failed'
+      const message = err?.data?.error || err?.message || i18nT('misc.auth.passwordChangeFailed', 'Password change failed')
       return { success: false, error: message }
     }
   }

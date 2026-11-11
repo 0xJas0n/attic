@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Collection } from '~/types/api'
 
+const { t } = useI18n()
 const model = defineModel<string[]>({ required: true })
 const { data, status, error, refresh } = useApi<Collection[]>('/api/collections')
 const options = computed(() => data.value?.map(c => ({ label: c.name, value: c.id, icon: c.icon })) || [])
@@ -14,10 +15,10 @@ const options = computed(() => data.value?.map(c => ({ label: c.name, value: c.i
           for="asset-collections"
           class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400"
         >
-          Collections <span class="normal-case font-medium text-muted">(optional)</span>
+          {{ t('assets.collectionsField.label') }} <span class="normal-case font-medium text-muted">({{ t('assets.collectionsField.optional') }})</span>
         </label>
         <p class="mt-1 text-xs text-muted">
-          Group this asset with others, such as PS5 games or furniture. Choose as many as you like.
+          {{ t('assets.collectionsField.hint') }}
         </p>
       </div>
       <NuxtLink
@@ -26,7 +27,7 @@ const options = computed(() => data.value?.map(c => ({ label: c.name, value: c.i
         rel="noopener noreferrer"
         class="text-xs font-bold text-attic-500 hover:text-attic-600 hover:underline"
       >
-        Manage collections
+        {{ t('assets.collectionsField.manage') }}
       </NuxtLink>
     </div>
     <div
@@ -34,11 +35,11 @@ const options = computed(() => data.value?.map(c => ({ label: c.name, value: c.i
       role="alert"
       class="text-sm text-error"
     >
-      Collections could not be loaded. <UButton
+      {{ t('assets.collectionsField.loadError') }} <UButton
         variant="link"
         @click="refresh()"
       >
-        Try again
+        {{ t('common.tryAgain') }}
       </UButton>
     </div>
     <USelectMenu
@@ -50,9 +51,9 @@ const options = computed(() => data.value?.map(c => ({ label: c.name, value: c.i
       :loading="status === 'pending'"
       :disabled="status === 'pending'"
       value-key="value"
-      placeholder="Search and choose a collection"
+      :placeholder="t('assets.collectionsField.placeholder')"
       icon="i-lucide-library"
-      aria-label="Collections"
+      :aria-label="t('assets.collectionsField.label')"
       class="w-full"
       size="lg"
     />
@@ -64,14 +65,14 @@ const options = computed(() => data.value?.map(c => ({ label: c.name, value: c.i
         size="xs"
         @click="model = []"
       >
-        Clear selections
+        {{ t('assets.collectionsField.clear') }}
       </UButton>
     </div>
     <p
       v-if="status === 'success' && !data?.length"
       class="text-xs text-muted"
     >
-      No collections yet. Create one from Manage collections, then refresh this list.
+      {{ t('assets.collectionsField.empty') }}
     </p>
     <UButton
       color="neutral"
@@ -80,7 +81,7 @@ const options = computed(() => data.value?.map(c => ({ label: c.name, value: c.i
       icon="i-lucide-refresh-cw"
       @click="refresh()"
     >
-      Refresh collections
+      {{ t('assets.collectionsField.refresh') }}
     </UButton>
   </div>
 </template>

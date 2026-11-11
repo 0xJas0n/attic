@@ -1,0 +1,57 @@
+{
+  "shell": {
+    "meta": {
+      "title": "Attic - Home Inventory",
+      "description": "A self-hosted home inventory for your belongings, rooms, warranties, receipts, and collections."
+    },
+    "unknown": "unknown",
+    "user": "User",
+    "tagline": "Home inventory",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "viewProfile": "View profile",
+    "savedSearches": "Saved searches",
+    "pinnedSavedSearches": "Pinned saved searches",
+    "openAccountMenu": "Open account menu",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
+    "addAsset": "Add asset",
+    "loadingCurrency": "Loading currency settings…",
+    "version": "Attic version {version}",
+    "section": {
+      "home": "Your home",
+      "manage": "Manage"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "allAssets": "All Assets",
+      "locations": "Locations",
+      "collections": "Collections",
+      "tags": "Tags",
+      "categories": "Categories",
+      "attributes": "Attributes",
+      "conditions": "Conditions",
+      "warranties": "Warranties",
+      "importSources": "Import sources",
+      "users": "Users",
+      "settings": "Settings"
+    },
+    "errors": {
+      "featuresTitle": "Feature settings could not be loaded",
+      "featuresBody": "Try again before continuing to your inventory.",
+      "currencyTitle": "Currency settings could not be loaded",
+      "currencyBody": "Prices are hidden until your organization’s currency is available."
+    }
+  },
+  "login": {
+    "failed": "Login failed",
+    "tagline": "Your home inventory",
+    "sso": "Sign in with SSO",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "signIn": "Sign in",
+    "poweredBy": "Powered by Attic"
+  }
+}

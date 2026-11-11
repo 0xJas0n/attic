@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AssetAttributeValue, Asset, Category, Location, Condition, Tag } from '~/types/api'
-import { isValidAssetQuantity, QUANTITY_VALIDATION_MESSAGE } from '~/utils/assetValidation'
+import { isValidAssetQuantity } from '~/utils/assetValidation'
 import { tagAssignment } from '~/utils/tags'
 
 definePageMeta({
@@ -9,6 +9,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const toast = useToast()
 const apiFetch = useApiFetch()
 const { features } = useFeatures()
@@ -205,28 +206,28 @@ function buildHierarchicalLocationOptions(items: Location[]): LocationOption[] {
 }
 
 const locationOptions = computed(() => [
-  { label: 'No location', value: undefined },
+  { label: t('assets.new.noLocation'), value: undefined },
   ...(locations.value ? buildHierarchicalLocationOptions(locations.value) : [])
 ])
 
 const conditionOptions = computed(() => [
-  { label: 'No condition', value: undefined },
+  { label: t('assets.new.noCondition'), value: undefined },
   ...(conditions.value?.map(c => ({ label: c.label, value: c.id })) || [])
 ])
 
 async function submitForm() {
   if (loading.value) return
   if (form.parent_id && !parentValid.value) {
-    toast.add({ title: 'Resolve the parent asset before saving', color: 'error' })
+    toast.add({ title: t('assets.new.resolveParent'), color: 'error' })
     return
   }
   if (!form.name) {
-    toast.add({ title: 'Name is required', color: 'error' })
+    toast.add({ title: t('assets.new.nameRequired'), color: 'error' })
     return
   }
 
   if (!isValidAssetQuantity(form.quantity)) {
-    toast.add({ title: QUANTITY_VALIDATION_MESSAGE, color: 'error' })
+    toast.add({ title: t('assets.validation.quantity'), color: 'error' })
     return
   }
 
@@ -259,12 +260,12 @@ async function submitForm() {
     })
 
     clearAsset()
-    toast.add({ title: 'Asset updated successfully', color: 'success' })
+    toast.add({ title: t('assets.edit.updated'), color: 'success' })
     router.push(`/assets/${route.params.id}`)
   } catch (err: unknown) {
     const error = err as { data?: { error?: string }, message?: string }
     toast.add({
-      title: error?.data?.error || error?.message || 'Failed to update asset',
+      title: error?.data?.error || error?.message || t('assets.edit.updateFailed'),
       color: 'error'
     })
   } finally {
@@ -286,7 +287,7 @@ async function submitForm() {
           class="w-12 h-12 animate-spin text-attic-500 mx-auto mb-4"
         />
         <p class="text-gray-500">
-          Loading asset...
+          {{ t('assets.edit.loading') }}
         </p>
       </div>
     </div>
@@ -295,7 +296,7 @@ async function submitForm() {
       <!-- Breadcrumbs & Heading -->
       <div class="space-y-3">
         <nav
-          aria-label="Breadcrumb"
+          :aria-label="t('assets.new.breadcrumb')"
           class="flex text-xs"
         >
           <ol class="flex items-center gap-1.5">
@@ -304,7 +305,7 @@ async function submitForm() {
                 to="/"
                 class="font-semibold text-muted transition-colors hover:text-attic-500"
               >
-                Dashboard
+                {{ t('assets.new.dashboard') }}
               </NuxtLink>
             </li>
             <li>
@@ -315,7 +316,7 @@ async function submitForm() {
                 to="/assets"
                 class="font-semibold text-muted transition-colors hover:text-attic-500"
               >
-                Assets
+                {{ t('assets.new.assets') }}
               </NuxtLink>
             </li>
             <li>
@@ -326,7 +327,7 @@ async function submitForm() {
                 :to="`/assets/${route.params.id}`"
                 class="max-w-48 truncate font-semibold text-muted transition-colors hover:text-attic-500"
               >
-                {{ asset?.name || 'Asset' }}
+                {{ asset?.name || t('assets.edit.asset') }}
               </NuxtLink>
             </li>
             <li>
@@ -336,7 +337,7 @@ async function submitForm() {
               <span
                 aria-current="page"
                 class="font-bold text-attic-500"
-              >Edit</span>
+              >{{ t('assets.edit.edit') }}</span>
             </li>
           </ol>
         </nav>
@@ -344,13 +345,13 @@ async function submitForm() {
         <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-              Asset editor
+              {{ t('assets.edit.eyebrow') }}
             </p>
             <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-              Edit {{ asset?.name }}
+              {{ t('assets.edit.title', { name: asset?.name }) }}
             </h1>
             <p class="mt-1 text-sm text-muted">
-              Keep its identity, location, and purchase details up to date.
+              {{ t('assets.edit.subtitle') }}
             </p>
           </div>
           <div class="hidden items-center gap-2 sm:flex">
@@ -360,7 +361,7 @@ async function submitForm() {
               color="neutral"
               class="rounded-xl font-semibold"
             >
-              Cancel
+              {{ t('assets.new.cancel') }}
             </UButton>
             <UButton
               :loading="loading"
@@ -368,7 +369,7 @@ async function submitForm() {
               icon="i-lucide-save"
               @click="submitForm"
             >
-              Save Changes
+              {{ t('assets.edit.save') }}
             </UButton>
           </div>
         </div>
@@ -391,10 +392,10 @@ async function submitForm() {
               </div>
               <div>
                 <h2 class="font-extrabold text-mist-950 dark:text-white">
-                  Basic information
+                  {{ t('assets.new.basicInfo') }}
                 </h2>
                 <p class="text-xs text-muted">
-                  The essential details used to identify and organize this asset.
+                  {{ t('assets.edit.basicInfoHint') }}
                 </p>
               </div>
             </div>
@@ -405,14 +406,14 @@ async function submitForm() {
                   for="asset-name"
                   class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                 >
-                  Asset Name <span class="text-amber-500">*</span>
+                  {{ t('assets.new.assetName') }} <span class="text-amber-500">*</span>
                 </label>
                 <div class="relative group">
                   <input
                     id="asset-name"
                     v-model="form.name"
                     type="text"
-                    placeholder="e.g. Vintage Canon AE-1"
+                    :placeholder="t('assets.new.namePlaceholder')"
                     class="block w-full rounded-xl border-mist-200 bg-white px-4 py-3 text-mist-950 shadow-sm transition-colors placeholder:text-dimmed focus:border-attic-500 focus:ring-attic-500 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
                   >
                   <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none opacity-0 group-focus-within:opacity-100 transition-opacity">
@@ -433,13 +434,13 @@ async function submitForm() {
                   for="location"
                   class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                 >
-                  Location
+                  {{ t('assets.edit.location') }}
                 </label>
                 <USelectMenu
                   id="location"
                   v-model="form.location_id"
                   :items="locationOptions"
-                  placeholder="Select a space..."
+                  :placeholder="t('assets.edit.locationPlaceholder')"
                   value-key="value"
                   class="w-full"
                   size="lg"
@@ -449,7 +450,7 @@ async function submitForm() {
 
             <AssetPicker
               v-model="form.parent_id"
-              label="Inside"
+              :label="t('assets.picker.inside')"
               :exclude-subtree-of="String(route.params.id)"
               :show-location="features.locations"
               @valid="parentValid = $event"
@@ -497,10 +498,10 @@ async function submitForm() {
               </div>
               <div>
                 <h2 class="font-extrabold text-mist-950 dark:text-white">
-                  Details and notes
+                  {{ t('assets.new.detailsTitle') }}
                 </h2>
                 <p class="text-xs text-muted">
-                  Condition, quantity, descriptions, and private context.
+                  {{ t('assets.edit.detailsHint') }}
                 </p>
               </div>
               <UIcon
@@ -516,12 +517,12 @@ async function submitForm() {
                 class="space-y-2"
               >
                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Condition
+                  {{ t('assets.new.condition') }}
                 </label>
                 <USelectMenu
                   v-model="form.condition_id"
                   :items="conditionOptions"
-                  placeholder="Select condition..."
+                  :placeholder="t('assets.new.conditionPlaceholder')"
                   value-key="value"
                   class="w-full"
                   size="lg"
@@ -531,7 +532,7 @@ async function submitForm() {
               <!-- Quantity -->
               <div class="space-y-2">
                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Quantity
+                  {{ t('assets.new.quantity') }}
                 </label>
                 <input
                   v-model.number="form.quantity"
@@ -545,12 +546,12 @@ async function submitForm() {
             <!-- Description -->
             <div class="space-y-2">
               <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Description
+                {{ t('assets.new.description') }}
               </label>
               <textarea
                 v-model="form.description"
                 rows="4"
-                placeholder="Product description, features, specifications..."
+                :placeholder="t('assets.new.descriptionPlaceholder')"
                 class="block w-full resize-none rounded-xl border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm placeholder:text-dimmed focus:border-attic-500 focus:ring-attic-500 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
               />
             </div>
@@ -558,12 +559,12 @@ async function submitForm() {
             <!-- Personal Notes -->
             <div class="space-y-2">
               <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Personal Notes
+                {{ t('assets.new.personalNotes') }}
               </label>
               <textarea
                 v-model="form.notes"
                 rows="3"
-                placeholder="Your personal notes: condition details, where you bought it, special memories..."
+                :placeholder="t('assets.new.notesPlaceholder')"
                 class="block w-full resize-none rounded-xl border-terracotta-100 bg-terracotta-50/40 px-4 py-3 text-sm text-mist-950 shadow-sm placeholder:text-dimmed focus:border-terracotta-300 focus:ring-terracotta-300 dark:border-terracotta-900/40 dark:bg-terracotta-950/10 dark:text-white"
               />
             </div>
@@ -586,10 +587,10 @@ async function submitForm() {
                 </div>
                 <div>
                   <h2 class="font-extrabold text-mist-950 dark:text-white">
-                    {{ selectedCategory.name }} fields
+                    {{ t('assets.new.categoryFields', { name: selectedCategory.name }) }}
                   </h2>
                   <p class="text-xs text-muted">
-                    Includes fields inherited through the category hierarchy.
+                    {{ t('assets.new.categoryFieldsHint') }}
                   </p>
                 </div>
               </div>
@@ -606,7 +607,7 @@ async function submitForm() {
                       <span
                         v-if="ca.inherited"
                         class="ml-1 normal-case font-semibold text-attic-500"
-                      >(inherited)</span>
+                      >({{ t('assets.new.inherited') }})</span>
                       <span
                         v-if="ca.required"
                         class="text-amber-500"
@@ -649,7 +650,7 @@ async function submitForm() {
                     <textarea
                       v-else-if="ca.attribute.data_type === 'text'"
                       :value="String(form.attributes[ca.attribute.key] ?? '')"
-                      :placeholder="`Enter ${ca.attribute.name.toLowerCase()}`"
+                      :placeholder="t('assets.new.enterNamed', { name: ca.attribute.name })"
                       rows="4"
                       class="block w-full resize-none rounded-xl border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm placeholder:text-dimmed focus:border-attic-500 focus:ring-attic-500 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
                       @input="form.attributes[ca.attribute.key] = ($event.target as HTMLTextAreaElement).value"
@@ -661,7 +662,7 @@ async function submitForm() {
                       v-model="form.attributes[ca.attribute.key]"
                       :type="getInputType(ca.attribute.data_type)"
                       :step="ca.attribute.data_type === 'number' ? 'any' : undefined"
-                      :placeholder="`Enter ${ca.attribute.name.toLowerCase()}`"
+                      :placeholder="t('assets.new.enterNamed', { name: ca.attribute.name })"
                       class="block w-full rounded-xl border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm placeholder:text-dimmed focus:border-attic-500 focus:ring-attic-500 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
                     >
                   </template>
@@ -674,7 +675,7 @@ async function submitForm() {
             v-else-if="features.categories && form.category_id && !selectedCategory?.attributes?.length"
             class="attic-panel rounded-[20px] py-5 text-center text-sm text-muted"
           >
-            <p>This category has no custom attributes.</p>
+            <p>{{ t('assets.edit.noCustomAttributes') }}</p>
           </div>
 
           <hr class="hidden">
@@ -694,10 +695,10 @@ async function submitForm() {
               </div>
               <div>
                 <h2 class="font-extrabold text-mist-950 dark:text-white">
-                  Purchase information
+                  {{ t('assets.new.purchaseTitle') }}
                 </h2>
                 <p class="text-xs text-muted">
-                  Optional cost and purchase records.
+                  {{ t('assets.new.purchaseHint') }}
                 </p>
               </div>
               <UIcon
@@ -710,7 +711,7 @@ async function submitForm() {
               <!-- Purchase Date -->
               <div class="space-y-2">
                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Purchase Date
+                  {{ t('assets.new.purchaseDate') }}
                 </label>
                 <input
                   v-model="form.purchase_at"
@@ -722,7 +723,7 @@ async function submitForm() {
               <!-- Purchase Price -->
               <div class="space-y-2">
                 <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Purchase Price
+                  {{ t('assets.new.purchasePrice') }}
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 pointer-events-none">{{ settings.currency }}</span>
@@ -741,12 +742,12 @@ async function submitForm() {
             <!-- Purchase Notes -->
             <div class="space-y-2">
               <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Purchase Notes
+                {{ t('assets.new.purchaseNotes') }}
               </label>
               <textarea
                 v-model="form.purchase_note"
                 rows="3"
-                placeholder="Store, receipt number, warranty info, etc."
+                :placeholder="t('assets.new.purchaseNotesPlaceholder')"
                 class="block w-full resize-none rounded-xl border-mist-200 bg-white px-4 py-3 text-sm text-mist-950 shadow-sm placeholder:text-dimmed focus:border-attic-500 focus:ring-attic-500 dark:border-mist-600 dark:bg-mist-800 dark:text-white"
               />
             </div>
@@ -756,7 +757,7 @@ async function submitForm() {
         <!-- Footer Action Area -->
         <div class="attic-panel flex flex-col items-center justify-between gap-3 rounded-[18px] px-4 py-3 sm:flex-row">
           <div class="text-xs text-muted">
-            <span class="text-amber-500">*</span> Required fields
+            <span class="text-amber-500">*</span> {{ t('assets.new.requiredFields') }}
           </div>
           <div class="flex items-center gap-3">
             <UButton
@@ -764,7 +765,7 @@ async function submitForm() {
               variant="ghost"
               color="neutral"
             >
-              Cancel
+              {{ t('assets.new.cancel') }}
             </UButton>
             <UButton
               type="submit"
@@ -772,7 +773,7 @@ async function submitForm() {
               class="rounded-xl shadow-primary"
               icon="i-lucide-save"
             >
-              Save Changes
+              {{ t('assets.edit.save') }}
             </UButton>
           </div>
         </div>

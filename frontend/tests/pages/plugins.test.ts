@@ -58,7 +58,7 @@ describe('Import sources page', () => {
     const setup = wrapper.get('section[aria-labelledby="setup-heading"]')
     expect(setup.findAll('h3').map(heading => heading.text())).toEqual(['Movies & TV Series'])
     expect(setup.findAll('button')).toHaveLength(1)
-    expect(setup.text()).toContain('Needs setup 2')
+    expect(setup.text()).toMatch(/Needs setup\s*2/)
     expect(wrapper.text()).not.toContain('Unavailable')
     expect(wrapper.text()).not.toContain('Created')
     expect(wrapper.get('details').attributes('open')).toBeUndefined()

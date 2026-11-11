@@ -4,6 +4,8 @@ import { getDashboardUrls } from '~/utils/dashboardUrls'
 
 definePageMeta({ middleware: 'auth' })
 
+const { t, locale } = useI18n()
+
 const { user } = useAuth()
 const { features } = useFeatures()
 const { settings } = useOrganizationSettings()
@@ -19,7 +21,7 @@ interface LocationTreeNode {
   children: LocationTreeNode[]
 }
 
-function buildLocationOptions(items: Location[]): { label: string, value: string }[] {
+function buildLocationOptions(items: Location[], allLabel: string): { label: string, value: string }[] {
   const childrenMap = new Map<string | undefined, Location[]>()
   items.forEach((location) => {
     const parentId = location.parent_id || undefined
@@ -42,12 +44,12 @@ function buildLocationOptions(items: Location[]): { label: string, value: string
     })
 
   return [
-    { label: 'All locations', value: 'all' },
+    { label: allLabel, value: 'all' },
     ...flattenTree(buildTree(undefined))
   ]
 }
 
-const locationOptions = computed(() => buildLocationOptions(locations.value || []))
+const locationOptions = computed(() => buildLocationOptions(locations.value || [], t('misc.index.allLocations')))
 const selectedLocation = computed(() =>
   locations.value?.find(location => location.id === selectedLocationId.value)
 )
@@ -63,59 +65,59 @@ const formatCurrency = (value: number) => formatPurchaseTotal(value, settings.va
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
+  if (hour < 12) return t('misc.index.greetingMorning')
+  if (hour < 18) return t('misc.index.greetingAfternoon')
+  return t('misc.index.greetingEvening')
 })
 
 const userName = computed(() => {
   if (user.value?.name) return user.value.name.split(' ')[0]
-  return user.value?.email?.split('@')[0] || 'there'
+  return user.value?.email?.split('@')[0] || t('misc.index.there')
 })
 
-const currentDate = new Intl.DateTimeFormat('en-US', {
+const currentDate = computed(() => new Intl.DateTimeFormat(locale.value, {
   weekday: 'long', month: 'long', day: 'numeric'
-}).format(new Date())
+}).format(new Date()))
 
 const formatRelativeTime = (dateString: string) => {
   const diffDays = Math.floor((Date.now() - new Date(dateString).getTime()) / 86400000)
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
+  if (diffDays === 0) return t('misc.index.today')
+  if (diffDays === 1) return t('misc.index.yesterday')
+  if (diffDays < 7) return t('misc.index.daysAgo', { count: diffDays })
   const weeks = Math.floor(diffDays / 7)
-  return `${weeks} week${weeks > 1 ? 's' : ''} ago`
+  return t('misc.index.weeksAgo', weeks)
 }
 
 const overviewMetrics = computed(() => [
-  { label: 'Assets', value: assets.value?.total || 0, icon: 'i-lucide-package', to: assetsPageUrl.value, enabled: true },
-  { label: 'Locations', value: locations.value?.length || 0, icon: 'i-lucide-map-pin', to: '/locations', enabled: features.value.locations },
-  { label: 'Expiring', value: expiringWarranties.value?.length || 0, icon: 'i-lucide-shield-alert', to: '/warranties', enabled: features.value.warranties }
+  { label: t('misc.index.metrics.assets'), value: assets.value?.total || 0, icon: 'i-lucide-package', to: assetsPageUrl.value, enabled: true },
+  { label: t('misc.index.metrics.locations'), value: locations.value?.length || 0, icon: 'i-lucide-map-pin', to: '/locations', enabled: features.value.locations },
+  { label: t('misc.index.metrics.expiring'), value: expiringWarranties.value?.length || 0, icon: 'i-lucide-shield-alert', to: '/warranties', enabled: features.value.warranties }
 ].filter(metric => metric.enabled))
 
 const quickLinks = computed(() => [
   {
-    label: 'Collections', description: collectionsError.value ? 'Manage your collections' : `${collections.value?.length || 0} shared collections`,
+    label: t('misc.index.quick.collections'), description: collectionsError.value ? t('misc.index.quick.collectionsManage') : t('misc.index.quick.collectionsCount', { count: collections.value?.length || 0 }),
     icon: 'i-lucide-library', to: '/collections',
     iconClass: 'bg-attic-100 text-attic-600 dark:bg-attic-500/15 dark:text-attic-300', enabled: features.value.collections
   },
   {
-    label: 'Browse assets', description: `${assets.value?.total || 0} items catalogued`,
+    label: t('misc.index.quick.browse'), description: t('misc.index.quick.browseCount', { count: assets.value?.total || 0 }),
     icon: 'i-lucide-package-search', to: assetsPageUrl.value,
     iconClass: 'bg-attic-100 text-attic-600 dark:bg-attic-500/15 dark:text-attic-300', enabled: true
   },
   {
-    label: 'Locations', description: `${locations.value?.length || 0} storage spaces`,
+    label: t('misc.index.quick.locations'), description: t('misc.index.quick.locationsCount', { count: locations.value?.length || 0 }),
     icon: 'i-lucide-map-pinned', to: '/locations',
     iconClass: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400', enabled: features.value.locations
   },
   {
-    label: 'Categories', description: `${categories.value?.length || 0} ways to organize`,
+    label: t('misc.index.quick.categories'), description: t('misc.index.quick.categoriesCount', { count: categories.value?.length || 0 }),
     icon: 'i-lucide-shapes', to: '/categories',
     iconClass: 'bg-terracotta-100 text-terracotta-600 dark:bg-terracotta-500/10 dark:text-terracotta-300', enabled: features.value.categories
   },
   {
-    label: 'Warranties',
-    description: expiringWarranties.value?.length ? `${expiringWarranties.value.length} need attention` : 'Everything is up to date',
+    label: t('misc.index.quick.warranties'),
+    description: expiringWarranties.value?.length ? t('misc.index.quick.warrantiesAttention', { count: expiringWarranties.value.length }) : t('misc.index.quick.warrantiesOk'),
     icon: 'i-lucide-shield-check', to: '/warranties',
     iconClass: 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400', enabled: features.value.warranties
   }
@@ -130,10 +132,10 @@ const quickLinks = computed(() => [
           {{ currentDate }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          {{ greeting }}, {{ userName }}.
+          {{ t('misc.index.greeting', { greeting, name: userName }) }}
         </h1>
         <p class="mt-1 text-sm text-muted">
-          Your belongings, and where to find them.
+          {{ t('misc.index.subtitle') }}
         </p>
       </div>
       <div class="flex items-center gap-2">
@@ -144,14 +146,14 @@ const quickLinks = computed(() => [
           icon="i-lucide-search"
           class="rounded-xl"
         >
-          Find an asset
+          {{ t('misc.index.findAsset') }}
         </UButton>
         <UButton
           to="/assets/new"
           icon="i-lucide-plus"
           class="rounded-xl shadow-primary"
         >
-          Add asset
+          {{ t('misc.index.addAsset') }}
         </UButton>
       </div>
     </header>
@@ -170,14 +172,14 @@ const quickLinks = computed(() => [
             </div>
             <div>
               <p class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/85">
-                Inventory overview
+                {{ t('misc.index.overview') }}
               </p>
               <USelectMenu
                 v-if="features.locations"
                 v-model="selectedLocationId"
                 :items="locationOptions"
                 value-key="value"
-                aria-label="Filter dashboard by location"
+                :aria-label="t('misc.index.filterByLocation')"
                 variant="none"
                 size="xs"
                 class="-ml-1 mt-0.5 w-auto max-w-44"
@@ -191,7 +193,7 @@ const quickLinks = computed(() => [
           </div>
           <NuxtLink
             :to="assetsPageUrl"
-            aria-label="Open all assets"
+            :aria-label="t('misc.index.openAllAssets')"
             class="flex size-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 transition hover:bg-white/20"
           >
             <UIcon
@@ -202,7 +204,7 @@ const quickLinks = computed(() => [
         </div>
         <div>
           <p class="text-xs font-bold uppercase tracking-[0.14em] text-white/85">
-            Total purchase value
+            {{ t('misc.index.totalValue') }}
           </p>
           <p class="mt-1 text-3xl font-black tracking-[-0.05em] sm:text-4xl">
             {{ formatCurrency(assetStats?.total_value || 0) }}
@@ -231,17 +233,17 @@ const quickLinks = computed(() => [
       <div class="mb-3 flex items-end justify-between gap-4">
         <div>
           <p class="text-xs font-extrabold uppercase tracking-[0.14em] text-muted">
-            Your inventory
+            {{ t('misc.index.yourInventory') }}
           </p>
           <h2 class="text-lg font-extrabold text-mist-950 dark:text-white md:text-xl">
-            Recently updated
+            {{ t('misc.index.recentlyUpdated') }}
           </h2>
         </div>
         <NuxtLink
           :to="assetsPageUrl"
           class="group flex items-center gap-1.5 text-sm font-bold text-attic-500 dark:text-attic-300 hover:text-attic-700"
         >
-          View all <UIcon
+          {{ t('misc.index.viewAll') }} <UIcon
             name="i-lucide-arrow-right"
             class="size-4 transition group-hover:translate-x-0.5"
           />
@@ -271,10 +273,10 @@ const quickLinks = computed(() => [
           />
         </div>
         <h3 class="mt-4 font-extrabold text-mist-950 dark:text-white">
-          No assets in {{ selectedLocation.name }}
+          {{ t('misc.index.noAssetsIn', { location: selectedLocation.name }) }}
         </h3>
         <p class="mx-auto mt-1 max-w-sm text-sm text-muted">
-          Try another location or view the full inventory.
+          {{ t('misc.index.tryAnother') }}
         </p>
         <UButton
           variant="outline"
@@ -283,7 +285,7 @@ const quickLinks = computed(() => [
           class="mt-5 rounded-xl"
           @click="selectedLocationId = 'all'"
         >
-          View all locations
+          {{ t('misc.index.viewAllLocations') }}
         </UButton>
       </div>
 
@@ -298,17 +300,17 @@ const quickLinks = computed(() => [
           />
         </div>
         <h3 class="mt-4 font-extrabold text-mist-950 dark:text-white">
-          Your inventory starts here
+          {{ t('misc.index.startsHere') }}
         </h3>
         <p class="mx-auto mt-1 max-w-sm text-sm text-muted">
-          Add your first asset and Attic will keep the details organized.
+          {{ t('misc.index.startsHereBody') }}
         </p>
         <UButton
           to="/assets/new"
           icon="i-lucide-plus"
           class="mt-5 rounded-xl"
         >
-          Add your first asset
+          {{ t('misc.index.addFirst') }}
         </UButton>
       </div>
     </section>
@@ -325,13 +327,13 @@ const quickLinks = computed(() => [
         />
       </div>
       <div class="flex-1">
-        <p class="font-extrabold text-mist-950 dark:text-white">A warranty check is due</p>
+        <p class="font-extrabold text-mist-950 dark:text-white">{{ t('misc.index.warrantyDue') }}</p>
         <p class="mt-0.5 text-sm text-mist-600 dark:text-mist-400">
-          {{ expiringWarranties?.length }} {{ expiringWarranties?.length === 1 ? 'warranty expires' : 'warranties expire' }} in the next 30 days.
+          {{ t('misc.index.warrantyExpires', expiringWarranties?.length || 0) }}
         </p>
       </div>
       <span class="flex items-center gap-1.5 text-sm font-bold text-amber-700 dark:text-amber-400">
-        Review coverage <UIcon
+        {{ t('misc.index.reviewCoverage') }} <UIcon
           name="i-lucide-arrow-right"
           class="size-4 transition group-hover:translate-x-0.5"
         />
@@ -340,7 +342,7 @@ const quickLinks = computed(() => [
     <div class="attic-panel xl:col-start-2 xl:row-start-2 rounded-[22px] p-4">
       <div class="mb-2 flex items-center justify-between">
         <h2 class="text-lg font-extrabold text-mist-950 dark:text-white">
-          Quick access
+          {{ t('misc.index.quickAccess') }}
         </h2>
         <UIcon
           name="i-lucide-sparkles"

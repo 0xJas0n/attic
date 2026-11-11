@@ -7,6 +7,7 @@ definePageMeta({
 })
 
 const toast = useToast()
+const { t } = useI18n()
 const apiFetch = useApiFetch()
 
 const { data: categories, refresh, status } = useApi<Category[]>('/api/categories')
@@ -29,7 +30,7 @@ async function viewAttributes(category: Category) {
     viewingCategory.value = fullCategory
     attributesModalOpen.value = true
   } catch {
-    toast.add({ title: 'Failed to load category attributes', color: 'error' })
+    toast.add({ title: t('catalog.categories.loadAttributesFailed'), color: 'error' })
   }
 }
 
@@ -45,12 +46,12 @@ async function deleteCategory() {
     await apiFetch(`/api/categories/${categoryToDelete.value.id}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Category deleted', color: 'success' })
+    toast.add({ title: t('catalog.categories.deleted'), color: 'success' })
     deleteModalOpen.value = false
     categoryToDelete.value = null
     refresh()
   } catch {
-    toast.add({ title: 'Failed to delete category', color: 'error' })
+    toast.add({ title: t('catalog.categories.deleteFailed'), color: 'error' })
   }
 }
 
@@ -113,7 +114,7 @@ const categoryGroups = computed(() => {
 })
 
 function getCategoryName(categoryId: string): string {
-  return categories.value?.find(category => category.id === categoryId)?.name || 'ancestor category'
+  return categories.value?.find(category => category.id === categoryId)?.name || t('catalog.categories.ancestor')
 }
 
 // Get asset count for a category
@@ -191,13 +192,13 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-          Inventory structure
+          {{ t('catalog.categories.eyebrow') }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          Categories
+          {{ t('catalog.categories.title') }}
         </h1>
         <p class="mt-1 max-w-2xl text-sm text-muted">
-          Group your home inventory and choose the details to record for each kind of belonging.
+          {{ t('catalog.categories.intro') }}
         </p>
       </div>
       <UButton
@@ -205,16 +206,16 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
         icon="i-lucide-plus"
         class="rounded-xl font-bold shadow-primary"
       >
-        New category
+        {{ t('catalog.categories.new') }}
       </UButton>
     </div>
 
-    <LibrarySummary :items="[{ label: 'Categories', value: totalCategories }, { label: 'Assets', value: totalItems }, { label: 'Unique fields', value: uniqueFields }]" />
+    <LibrarySummary :items="[{ label: t('catalog.categories.title'), value: totalCategories }, { label: t('catalog.categories.statAssets'), value: totalItems }, { label: t('catalog.categories.statFields'), value: uniqueFields }]" />
     <section class="space-y-6">
       <LibraryToolbar
         v-model="search"
-        title="Category library"
-        placeholder="Search categories"
+        :title="t('catalog.categories.library')"
+        :placeholder="t('catalog.categories.search')"
         :count="filteredCategoryRows.length"
         :total="totalCategories"
       />
@@ -225,10 +226,10 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
         />
         <div>
           <p class="text-sm font-bold text-mist-900 dark:text-white">
-            Fields flow down the category tree
+            {{ t('catalog.categories.flowTitle') }}
           </p>
           <p class="mt-0.5 text-xs leading-5 text-muted">
-            A child receives the fields of every category above it. Fields added directly to the child can refine that inherited setup.
+            {{ t('catalog.categories.flowBody') }}
           </p>
         </div>
       </div>
@@ -255,13 +256,13 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
           />
         </div>
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No categories yet
+          {{ t('catalog.categories.emptyTitle') }}
         </h3>
         <p class="text-sm text-muted mb-4 max-w-sm">
-          Create your first category to start organizing your assets.
+          {{ t('catalog.categories.emptyBody') }}
         </p>
         <UButton to="/categories/new">
-          Create Category
+          {{ t('catalog.categories.create') }}
         </UButton>
       </div>
 
@@ -274,21 +275,21 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
           class="mx-auto mb-3 size-7 text-mist-300"
         />
         <p class="font-bold text-mist-700 dark:text-mist-200">
-          No matching categories
+          {{ t('catalog.categories.noMatch') }}
         </p>
         <button
           type="button"
           class="mt-1 text-sm font-semibold text-attic-500 hover:text-attic-600"
           @click="search = ''"
         >
-          Clear search
+          {{ t('catalog.shared.clearSearch') }}
         </button>
       </div>
 
       <div
         v-else
         role="tree"
-        aria-label="Category inheritance tree"
+        :aria-label="t('catalog.categories.treeLabel')"
         class="space-y-4"
       >
         <section
@@ -343,7 +344,7 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
                     v-if="row.childCount"
                     class="mt-1 text-[11px] font-semibold text-muted"
                   >
-                    {{ row.childCount }} direct {{ row.childCount === 1 ? 'child' : 'children' }}
+                    {{ t('catalog.categories.children', row.childCount) }}
                   </p>
                 </div>
               </div>
@@ -352,10 +353,10 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
                 <button
                   type="button"
                   class="rounded-full bg-mist-100 px-2.5 py-1 text-xs font-bold text-mist-700 transition hover:bg-mist-200 dark:bg-mist-700 dark:text-mist-100 dark:hover:bg-mist-600"
-                  :aria-label="'View available fields for ' + row.category.name"
+                  :aria-label="t('catalog.categories.viewAvailable', { name: row.category.name })"
                   @click="viewAttributes(row.category)"
                 >
-                  {{ row.directFieldCount }} own
+                  {{ t('catalog.categories.own', { count: row.directFieldCount }) }}
                 </button>
                 <template v-if="row.inheritedFieldCount">
                   <UIcon
@@ -365,13 +366,13 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
                   <button
                     type="button"
                     class="rounded-full bg-attic-100 px-2.5 py-1 text-xs font-bold text-attic-700 transition hover:bg-attic-200 dark:bg-attic-900/40 dark:text-attic-300"
-                    :aria-label="'View inherited fields for ' + row.category.name"
+                    :aria-label="t('catalog.categories.viewInherited', { name: row.category.name })"
                     @click="viewAttributes(row.category)"
                   >
-                    {{ row.inheritedFieldCount }} inherited
+                    {{ t('catalog.categories.inherited', { count: row.inheritedFieldCount }) }}
                   </button>
                   <span class="text-xs font-bold text-mist-700 dark:text-mist-200">
-                    = {{ row.availableFieldCount }} available
+                    {{ t('catalog.categories.available', { count: row.availableFieldCount }) }}
                   </span>
                 </template>
               </div>
@@ -392,7 +393,7 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
                   variant="ghost"
                   color="neutral"
                   size="xs"
-                  :aria-label="'Add child category under ' + row.category.name"
+                  :aria-label="t('catalog.categories.addChild', { name: row.category.name })"
                 />
                 <UButton
                   :to="'/categories/' + row.category.id + '/edit'"
@@ -400,14 +401,14 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
                   variant="ghost"
                   color="neutral"
                   size="xs"
-                  :aria-label="'Edit ' + row.category.name"
+                  :aria-label="t('catalog.categories.editAria', { name: row.category.name })"
                 />
                 <UButton
                   icon="i-lucide-trash-2"
                   variant="ghost"
                   color="error"
                   size="xs"
-                  :aria-label="'Delete ' + row.category.name"
+                  :aria-label="t('catalog.categories.deleteAria', { name: row.category.name })"
                   @click="confirmDelete(row.category)"
                 />
               </div>
@@ -420,8 +421,8 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
     <!-- Delete Confirmation Modal -->
     <UModal
       v-model:open="deleteModalOpen"
-      title="Delete Category"
-      description="Confirm permanent deletion of this category."
+      :title="t('catalog.categories.deleteTitle')"
+      :description="t('catalog.categories.deleteHint')"
     >
       <template #content>
         <div class="bg-white dark:bg-mist-800 rounded-xl shadow-xl p-6 max-w-md">
@@ -434,10 +435,17 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
             </div>
             <div class="flex-1">
               <h3 class="text-lg font-bold text-mist-950 dark:text-white">
-                Delete Category
+                {{ t('catalog.categories.deleteTitle') }}
               </h3>
               <p class="text-sm text-muted mt-2">
-                Are you sure you want to delete <strong>{{ categoryToDelete?.name }}</strong>? This action cannot be undone.
+                <i18n-t
+                  keypath="catalog.categories.deleteConfirm"
+                  tag="span"
+                >
+                  <template #name>
+                    <strong>{{ categoryToDelete?.name }}</strong>
+                  </template>
+                </i18n-t>
               </p>
             </div>
           </div>
@@ -447,13 +455,13 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
               color="neutral"
               @click="deleteModalOpen = false"
             >
-              Cancel
+              {{ t('catalog.shared.cancel') }}
             </UButton>
             <UButton
               color="error"
               @click="deleteCategory"
             >
-              Delete
+              {{ t('catalog.categories.delete') }}
             </UButton>
           </div>
         </div>
@@ -463,8 +471,8 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
     <!-- Attributes View Modal -->
     <UModal
       v-model:open="attributesModalOpen"
-      :title="`${viewingCategory?.name || 'Category'} fields`"
-      :description="`${viewingCategory?.attributes?.length || 0} fields available, including inherited fields`"
+      :title="t('catalog.categories.fieldsTitle', { name: viewingCategory?.name || t('catalog.categories.categoryFallback') })"
+      :description="t('catalog.categories.fieldsHint', { count: viewingCategory?.attributes?.length || 0 })"
     >
       <template #content>
         <div class="bg-white dark:bg-mist-800 rounded-xl shadow-xl max-w-md w-full">
@@ -482,10 +490,10 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
               </div>
               <div>
                 <h3 class="text-lg font-bold text-mist-950 dark:text-white">
-                  {{ viewingCategory?.name }} fields
+                  {{ t('catalog.categories.fieldsTitle', { name: viewingCategory?.name }) }}
                 </h3>
                 <p class="text-sm text-muted">
-                  {{ viewingCategory?.attributes?.length || 0 }} available on assets in this category
+                  {{ t('catalog.categories.availableOnAssets', { count: viewingCategory?.attributes?.length || 0 }) }}
                 </p>
               </div>
             </div>
@@ -501,7 +509,7 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
                 class="w-10 h-10 text-mist-300 mx-auto mb-3"
               />
               <p class="text-sm text-muted">
-                No fields are available for this category.
+                {{ t('catalog.categories.noFields') }}
               </p>
             </div>
 
@@ -526,19 +534,19 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
                   </div>
                   <div class="min-w-0">
                     <p class="truncate font-medium text-mist-950 dark:text-white">
-                      {{ attr.attribute?.name || 'Unknown' }}
+                      {{ attr.attribute?.name || t('catalog.shared.unknown') }}
                     </p>
                     <p
                       v-if="attr.inherited"
                       class="truncate text-[11px] font-semibold text-attic-500"
                     >
-                      Inherited from {{ getCategoryName(attr.category_id) }}
+                      {{ t('catalog.categories.inheritedFrom', { name: getCategoryName(attr.category_id) }) }}
                     </p>
                     <p
                       v-else
                       class="text-[11px] text-muted"
                     >
-                      Defined here
+                      {{ t('catalog.categories.definedHere') }}
                     </p>
                   </div>
                 </div>
@@ -550,7 +558,7 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
                     v-if="attr.required"
                     class="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded"
                   >
-                    Required
+                    {{ t('catalog.categories.required') }}
                   </span>
                 </div>
               </div>
@@ -564,14 +572,14 @@ function getAttributeStyle(dataType: string): { icon: string, bgColor: string, t
               variant="soft"
               @click="attributesModalOpen = false"
             >
-              Edit Attributes
+              {{ t('catalog.categories.editAttributes') }}
             </UButton>
             <UButton
               variant="ghost"
               color="neutral"
               @click="attributesModalOpen = false"
             >
-              Close
+              {{ t('catalog.categories.close') }}
             </UButton>
           </div>
         </div>

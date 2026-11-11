@@ -1,6 +1,7 @@
 <script setup lang="ts">
 defineProps<{ title: string, placeholder: string, count: number, total: number }>()
 const search = defineModel<string>({ required: true })
+const { t } = useI18n()
 </script>
 
 <template>
@@ -13,7 +14,7 @@ const search = defineModel<string>({ required: true })
         class="mt-1 text-xs text-muted"
         role="status"
       >
-        Showing {{ count }} of {{ total }}
+        {{ t('misc.libraryToolbar.showing', { count, total }) }}
       </p>
     </div>
     <UInput

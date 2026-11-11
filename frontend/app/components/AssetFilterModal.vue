@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Attribute, FilterCriteria, FilterIssue, FilterNode, OrganizationFeatures, SavedFilter } from '~/types/api'
-import { copyCriteria, countRules, criteriaKeys, criteriaLabels, issueLabel, normalizeIssuePath, validateExpression } from '~/utils/assetFilters'
+import { copyCriteria, countRules, criteriaKeys, criteriaLabel, issueLabel, normalizeIssuePath, validateExpression } from '~/utils/assetFilters'
 
 const props = defineProps<{
   criteria: FilterCriteria
@@ -14,6 +14,7 @@ const props = defineProps<{
   save: (name: string, criteria: FilterCriteria, update: boolean) => Promise<boolean>
 }>()
 const emit = defineEmits<{ apply: [criteria: FilterCriteria] }>()
+const { t } = useI18n()
 const open = ref(false)
 const mode = ref<'advanced' | 'edit'>('advanced')
 const draft = ref<FilterCriteria>({ version: 1 })
@@ -28,11 +29,11 @@ const topRows = computed<TopRow[]>(() => {
     const field = key === 'collection_id' ? 'collections' : key.replace('_id', '')
     const option = props.options[field]?.find(option => option.value === value)
     const unavailable = key === 'q' ? false : key === 'attribute_q' ? !props.features.attributes : !option
-    return { key, label: criteriaLabels[key], value: option?.label || value, unavailable }
+    return { key, label: criteriaLabel(key), value: option?.label || value, unavailable }
   })
   if (draft.value.tag_ids?.length) {
     const tags = draft.value.tag_ids.map(id => props.options.tags?.find(option => option.value === id))
-    rows.push({ key: 'tag_ids', label: 'Tags', value: tags.map((tag, index) => tag?.label || draft.value.tag_ids![index]).join(', '), unavailable: tags.some(tag => !tag) })
+    rows.push({ key: 'tag_ids', label: t('assets.filterModal.tags'), value: tags.map((tag, index) => tag?.label || draft.value.tag_ids![index]).join(', '), unavailable: tags.some(tag => !tag) })
   }
   return rows
 })
@@ -46,7 +47,7 @@ function removeTop(key: typeof criteriaKeys[number] | 'tag_ids') {
   Reflect.deleteProperty(draft.value, key)
   localIssues.value = localIssues.value.filter(issue => normalizeIssuePath(issue.path) !== key)
 }
-const title = computed(() => mode.value === 'edit' ? 'Edit saved search' : 'Advanced search')
+const title = computed(() => mode.value === 'edit' ? t('assets.filterModal.editSaved') : t('assets.filterModal.advanced'))
 function show(nextMode: 'advanced' | 'edit' = 'advanced') {
   mode.value = nextMode
   draft.value = copyCriteria(props.criteria)
@@ -58,13 +59,13 @@ function show(nextMode: 'advanced' | 'edit' = 'advanced') {
 function validate() {
   localIssues.value = validateExpression(draft.value.expression)
   if (draft.value.version !== 1) {
-    localIssues.value.push({ path: 'version', message: `Filter version ${draft.value.version} is not supported.` })
+    localIssues.value.push({ path: 'version', message: t('assets.filterModal.versionUnsupported', { version: draft.value.version }) })
   }
   if (countRules(draft.value.expression) + topRows.value.length > 50) {
-    localIssues.value.push({ path: 'expression', message: 'Use at most 50 rules, including current page criteria.' })
+    localIssues.value.push({ path: 'expression', message: t('assets.filterModal.maxRules') })
   }
   for (const row of topRows.value) {
-    if (row.unavailable) localIssues.value.push({ path: row.key, message: 'This criterion is unavailable. Remove it to continue.' })
+    if (row.unavailable) localIssues.value.push({ path: row.key, message: t('assets.filterModal.criterionUnavailable') })
   }
   function visit(node?: FilterNode, path = 'expression') {
     if (!node) return
@@ -75,12 +76,12 @@ function validate() {
     const add = (message: string) => localIssues.value.push({ path, message })
     if (node.field === 'attribute') {
       const attr = props.attributes.find(a => a.id === node.attribute_id)
-      if (!attr || attr.data_type !== node.data_type || (attr.data_type === 'select' && (attr.selection_mode || 'single') !== node.selection_mode)) add('Choose an available attribute with its current type or remove this rule.')
-      if (attr?.data_type === 'select' && node.values?.some(id => !attr.options?.some(o => o.id === id))) add('Remove unavailable options or choose replacements.')
+      if (!attr || attr.data_type !== node.data_type || (attr.data_type === 'select' && (attr.selection_mode || 'single') !== node.selection_mode)) add(t('assets.filterModal.chooseAttribute'))
+      if (attr?.data_type === 'select' && node.values?.some(id => !attr.options?.some(o => o.id === id))) add(t('assets.filterModal.removeOptions'))
     } else if (node.field === 'attribute_q') {
-      if (!props.features.attributes) add('Attribute search is disabled.')
+      if (!props.features.attributes) add(t('assets.filterModal.attributeSearchDisabled'))
     } else if (node.field !== 'q') {
-      if (!props.options[node.field] || node.values?.some(id => !props.options[node.field]?.some(o => o.value === id))) add('Choose available values or remove this rule.')
+      if (!props.options[node.field] || node.values?.some(id => !props.options[node.field]?.some(o => o.value === id))) add(t('assets.filterModal.chooseValues'))
     }
   }
   visit(draft.value.expression)
@@ -92,7 +93,7 @@ function apply() {
   open.value = false
 }
 async function saveDraft(update: boolean) {
-  nameError.value = name.value.trim() ? '' : 'Enter a filter name.'
+  nameError.value = name.value.trim() ? '' : t('assets.filterModal.nameRequired')
   if (!validate() || nameError.value) return
   if (await props.save(name.value, copyCriteria(draft.value), update)) open.value = false
 }
@@ -103,7 +104,7 @@ defineExpose({ show })
   <UModal
     v-model:open="open"
     :title="title"
-    description="Combine rules with AND / OR. Saved searches are private to you."
+    :description="t('assets.filterModal.description')"
     :dismissible="!busy"
     :close="!busy"
     :ui="{ content: 'sm:max-w-4xl' }"
@@ -111,12 +112,12 @@ defineExpose({ show })
     <template #body>
       <div class="space-y-4">
         <p class="text-sm text-muted">
-          These rules also match all current search and page filters. Saving includes those criteria, without pagination.
+          {{ t('assets.filterModal.note') }}
         </p>
         <div
           v-if="topRows.length"
           class="space-y-2"
-          aria-label="Current page criteria"
+          :aria-label="t('assets.filterModal.currentCriteria')"
         >
           <div
             v-for="row in topRows"
@@ -126,15 +127,15 @@ defineExpose({ show })
             <span class="min-w-0 break-words text-sm text-default"><strong>{{ row.label }}:</strong> {{ row.value }} <span
               v-if="row.unavailable"
               class="text-error"
-            >(unavailable)</span></span>
+            >({{ t('assets.filterModal.unavailable') }})</span></span>
             <UButton
               size="xs"
               variant="ghost"
               color="neutral"
-              :aria-label="`Remove ${row.label} criterion`"
+              :aria-label="t('assets.filterModal.removeCriterion', { label: row.label })"
               @click="removeTop(row.key)"
             >
-              Remove
+              {{ t('assets.filterModal.remove') }}
             </UButton>
             <p
               v-for="(issue, index) in allIssues.filter(issue => normalizeIssuePath(issue.path).split('.')[0] === row.key || (row.key === 'tag_ids' && normalizeIssuePath(issue.path) === 'tag_match'))"
@@ -160,16 +161,16 @@ defineExpose({ show })
           variant="soft"
           @click="draft.expression = { kind: 'group', match: 'all', children: [{ kind: 'rule', field: 'q', operator: 'search', value: '' }] }"
         >
-          Add rules
+          {{ t('assets.filterModal.addRules') }}
         </UButton>
         <UFormField
-          label="Filter name"
+          :label="t('assets.filterModal.filterName')"
           :error="nameError || undefined"
         >
           <UInput
             v-model="name"
-            aria-label="Filter name"
-            placeholder="e.g. Retro computers"
+            :aria-label="t('assets.filterModal.filterName')"
+            :placeholder="t('assets.filterModal.namePlaceholder')"
             class="w-full"
           />
         </UFormField>
@@ -183,7 +184,7 @@ defineExpose({ show })
         <ul
           v-if="allIssues.length"
           class="list-disc pl-5 text-sm text-error"
-          aria-label="Filter issues"
+          :aria-label="t('assets.filterModal.issues')"
         >
           <li
             v-for="(issue, index) in allIssues"
@@ -202,27 +203,27 @@ defineExpose({ show })
           :disabled="busy"
           @click="open = false"
         >
-          Cancel
+          {{ t('assets.filterModal.cancel') }}
         </UButton>
         <UButton
           variant="outline"
           :disabled="busy"
           @click="apply"
         >
-          Apply
+          {{ t('assets.filterModal.apply') }}
         </UButton>
         <UButton
           :loading="busy"
           @click="saveDraft(false)"
         >
-          Save as new
+          {{ t('assets.filterModal.saveAsNew') }}
         </UButton>
         <UButton
           v-if="selected"
           :loading="busy"
           @click="saveDraft(true)"
         >
-          Update saved filter
+          {{ t('assets.filterModal.updateSaved') }}
         </UButton>
       </div>
     </template>

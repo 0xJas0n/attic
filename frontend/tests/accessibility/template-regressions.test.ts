@@ -54,10 +54,10 @@ describe('accessibility template regressions', () => {
   it('keeps the account menu trigger named', () => {
     const source = readAppFile('app.vue')
 
-    expect(source).toContain('aria-label="Open account menu"')
-    expect(source).toContain('aria-label="Open navigation"')
-    expect(source).toContain('aria-label="Close navigation"')
-    expect(source).toContain('aria-label="Add asset"')
+    expect(source).toContain(':aria-label="t(\'shell.openAccountMenu\')"')
+    expect(source).toContain(':aria-label="t(\'shell.openNavigation\')"')
+    expect(source).toContain(':aria-label="t(\'shell.closeNavigation\')"')
+    expect(source).toContain(':aria-label="t(\'shell.addAsset\')"')
   })
 
   it('requests search focus when navigating from the dashboard', () => {
@@ -72,19 +72,19 @@ describe('accessibility template regressions', () => {
     const source = readAppFile('pages/assets/index.vue')
 
     expect(source).toContain(':to="`/assets/${asset.id}`"')
-    expect(source).toContain(':aria-label="`Actions for ${asset.name}`"')
+    expect(source).toContain(':aria-label="t(\'assets.index.actionsFor\', { name: asset.name })"')
   })
 
   it('distinguishes an asset load failure from an empty inventory and offers retry', () => {
     const source = readAppFile('pages/assets/index.vue')
 
     expect(source).toContain('v-else-if="error || blocked"')
-    expect(source).toContain('Could not load assets')
+    expect(source).toContain('assets.index.loadError')
     expect(source).toContain('@click="refresh()"')
   })
 
   it('names the mobile asset delete control', () => {
-    expect(readAppFile('pages/assets/[id]/index.vue')).toContain(':aria-label="`Delete ${asset.name}`"')
+    expect(readAppFile('pages/assets/[id]/index.vue')).toContain(':aria-label="t(\'assets.detail.deleteNamed\', { name: asset.name })"')
   })
 
   it('uses the shared searchable icon picker everywhere icons are editable', () => {
@@ -99,7 +99,7 @@ describe('accessibility template regressions', () => {
 
     const iconPicker = readAppFile('components/IconPicker.vue')
     expect(iconPicker).toContain('max-h-72 overflow-y-auto')
-    expect(iconPicker).toContain('Search Lucide icons')
+    expect(iconPicker).toContain('catalog.iconPicker.searchAria')
   })
 
   it('allows the attribute filters to shrink without overlapping search', () => {

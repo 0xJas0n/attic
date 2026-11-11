@@ -9,6 +9,7 @@ withDefaults(defineProps<{
   showDescription?: boolean
 }>(), { layout: 'responsive' })
 const { features } = useFeatures()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -43,7 +44,7 @@ const { features } = useFeatures()
           v-if="features.categories"
           class="absolute left-3 top-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold text-mist-600 shadow-sm backdrop-blur dark:bg-mist-900/85 dark:text-mist-300"
           :class="layout === 'list' ? 'hidden' : layout === 'responsive' ? 'hidden sm:inline' : ''"
-        >{{ asset.category?.name || 'Uncategorized' }}</span>
+        >{{ asset.category?.name || t('assets.card.uncategorized') }}</span>
       </div>
       <div class="min-w-0 flex-1 p-3.5">
         <div class="flex items-start justify-between gap-3">
@@ -59,7 +60,7 @@ const { features } = useFeatures()
               v-if="features.categories && layout !== 'grid'"
               class="mt-1 truncate text-[10px] font-bold uppercase text-muted"
               :class="layout === 'responsive' ? 'sm:hidden' : ''"
-            >{{ asset.category?.name || 'Uncategorized' }}</p>
+            >{{ asset.category?.name || t('assets.card.uncategorized') }}</p>
             <p
               v-if="features.locations"
               class="mt-1 flex items-center gap-1.5 text-xs text-muted"
@@ -68,12 +69,12 @@ const { features } = useFeatures()
                 name="i-lucide-map-pin"
                 class="size-3.5 shrink-0"
               />
-              <span class="truncate">{{ asset.location?.name || 'No location' }}</span>
+              <span class="truncate">{{ asset.location?.name || t('assets.card.noLocation') }}</span>
             </p>
             <div
               v-if="features.collections"
               class="mt-2 flex min-w-0 items-center gap-1.5 text-[11px] text-muted"
-              :title="asset.collections?.length ? asset.collections.map(collection => collection.name).join(', ') : 'No collections'"
+              :title="asset.collections?.length ? asset.collections.map(collection => collection.name).join(', ') : t('assets.card.noCollections')"
             >
               <UIcon
                 name="i-lucide-library"
@@ -86,7 +87,7 @@ const { features } = useFeatures()
                   class="shrink-0 font-bold text-attic-500 dark:text-attic-300"
                 >+{{ asset.collections.length - 1 }}</span>
               </template>
-              <span v-else>No collections</span>
+              <span v-else>{{ t('assets.card.noCollections') }}</span>
             </div>
           </div>
           <UIcon

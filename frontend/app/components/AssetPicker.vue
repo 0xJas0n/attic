@@ -9,6 +9,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ resolved: [asset: Asset | null], valid: [valid: boolean] }>()
 const model = defineModel<string | null>({ default: null })
+const { t } = useI18n()
 const apiFetch = useApiFetch()
 const search = ref('')
 const results = ref<Asset[]>([])
@@ -35,7 +36,7 @@ async function loadMore(reset = false) {
     results.value = reset ? response.assets : [...results.value, ...response.assets]
     total.value = response.total
   } catch {
-    if (request === searchRequest) error.value = 'Assets could not be loaded.'
+    if (request === searchRequest) error.value = t('assets.picker.loadError')
   } finally {
     if (request === searchRequest) pending.value = false
   }
@@ -57,7 +58,7 @@ async function resolveSelection() {
     emit('resolved', asset)
     emit('valid', true)
   } catch {
-    if (request === selectionRequest) selectionError.value = 'Selected asset is unavailable. Choose another asset or clear the selection.'
+    if (request === selectionRequest) selectionError.value = t('assets.picker.unavailable')
   } finally {
     if (request === selectionRequest) resolving.value = false
   }
@@ -84,7 +85,7 @@ const options = computed(() => {
   if (selectedAsset.value) assets.set(selectedAsset.value.id, selectedAsset.value)
   return [...assets.values()].map(asset => ({
     value: asset.id,
-    label: asset.parent ? `${asset.name} — inside ${asset.parent.name}` : asset.name
+    label: asset.parent ? t('assets.picker.insideParent', { name: asset.name, parent: asset.parent.name }) : asset.name
   }))
 })
 </script>
@@ -100,7 +101,7 @@ const options = computed(() => {
       :loading="pending || resolving"
       value-key="value"
       ignore-filter
-      placeholder="Search and choose an asset"
+      :placeholder="t('assets.picker.placeholder')"
       class="w-full"
       @update:open="open => open && loadMore(true)"
     />
@@ -112,7 +113,7 @@ const options = computed(() => {
         size="xs"
         @click="model = null"
       >
-        Clear {{ label.toLowerCase() }}
+        {{ t('assets.picker.clear', { label }) }}
       </UButton>
       <UButton
         v-if="results.length < total"
@@ -122,20 +123,20 @@ const options = computed(() => {
         :disabled="pending"
         @click="loadMore()"
       >
-        Load more assets
+        {{ t('assets.picker.loadMore') }}
       </UButton>
     </div>
     <p
-      v-if="selectedAsset?.parent && label !== 'Inside'"
+      v-if="selectedAsset?.parent && label !== t('assets.picker.inside')"
       class="text-xs text-muted"
     >
-      Saving will move this asset out of {{ selectedAsset.parent.name }}.
+      {{ t('assets.picker.willMoveOut', { name: selectedAsset.parent.name }) }}
     </p>
     <p
       v-if="showLocation && model"
       class="text-sm text-muted"
     >
-      Location: {{ selectedAsset?.location?.name || 'Unset' }}. Contents move with their parent.
+      {{ t('assets.picker.locationNote', { location: selectedAsset?.location?.name || t('assets.picker.unset') }) }}
     </p>
     <p
       v-if="selectionError || error"
@@ -151,7 +152,7 @@ const options = computed(() => {
       size="xs"
       @click="selectionError ? resolveSelection() : loadMore(true)"
     >
-      Try again
+      {{ t('common.tryAgain') }}
     </UButton>
   </div>
 </template>

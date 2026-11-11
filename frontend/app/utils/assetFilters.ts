@@ -1,16 +1,21 @@
 import type { Attribute, FilterCriteria, FilterIssue, FilterNode, FilterRule, OrganizationFeatures } from '~/types/api'
 
 export const criteriaKeys = ['q', 'attribute_q', 'category_id', 'location_id', 'condition_id', 'collection_id'] as const
-export const criteriaLabels: Record<typeof criteriaKeys[number], string> = {
-  q: 'Quick search', attribute_q: 'Attribute values', category_id: 'Category', location_id: 'Location', condition_id: 'Condition', collection_id: 'Collection'
+
+function t(key: string, params?: Record<string, unknown>): string {
+  return useNuxtApp().$i18n.t(`assets.filters.${key}`, params ?? {}) as string
+}
+
+export function criteriaLabel(key: typeof criteriaKeys[number]): string {
+  return t(`criteria.${key}`)
 }
 
 /** Describe quick-search coverage using only enabled workspace features. */
 export function quickSearchDescription(features: Pick<OrganizationFeatures, 'tags' | 'attributes'>): string {
-  const fields = ['names', 'descriptions', 'personal notes']
-  if (features.tags) fields.push('tags')
-  if (features.attributes) fields.push('attribute values')
-  return `Search ${fields.slice(0, -1).join(', ')}, and ${fields[fields.length - 1]}.`
+  const fields = [t('quickSearch.names'), t('quickSearch.descriptions'), t('quickSearch.notes')]
+  if (features.tags) fields.push(t('quickSearch.tags'))
+  if (features.attributes) fields.push(t('quickSearch.attributeValues'))
+  return t('quickSearch.description', { fields: fields.slice(0, -1).join(', '), last: fields[fields.length - 1] })
 }
 
 export function normalizeIssuePath(path: string) {
@@ -20,18 +25,18 @@ export function normalizeIssuePath(path: string) {
 export function issueLabel(issue: FilterIssue, criteria: FilterCriteria, attributes: Attribute[] = []) {
   const path = normalizeIssuePath(issue.path)
   const key = criteriaKeys.find(key => path === key || path.startsWith(`${key}.`))
-  if (key) return criteriaLabels[key]
-  if (path === 'tag_ids' || path === 'tag_match') return 'Tags'
-  if (!path.startsWith('expression')) return 'Filter'
+  if (key) return criteriaLabel(key)
+  if (path === 'tag_ids' || path === 'tag_match') return t('field.tags')
+  if (!path.startsWith('expression')) return t('field.filter')
   const indices = [...path.matchAll(/children\.(\d+)/g)].map(match => Number(match[1]))
   let node = criteria.expression
   for (const index of indices) node = node?.kind === 'group' ? node.children[index] : undefined
   const label = node?.kind === 'rule'
     ? node.field === 'attribute'
-      ? attributes.find(a => a.id === node.attribute_id)?.name || 'Attribute'
-      : ({ collections: 'Collections', tags: 'Tags', category: 'Category', location: 'Location', condition: 'Condition', q: 'Quick search', attribute_q: 'Attribute values' })[node.field]
-    : 'Group'
-  return `${label}${indices.length ? ` (rule ${indices.map(i => i + 1).join('.')})` : ''}`
+      ? attributes.find(a => a.id === node.attribute_id)?.name || t('field.attribute')
+      : t(`field.${node.field}`)
+    : t('field.group')
+  return indices.length ? t('ruleLabel', { label, rule: indices.map(i => i + 1).join('.') }) : label
 }
 
 export function copyCriteria(value: FilterCriteria): FilterCriteria {
@@ -60,19 +65,19 @@ export function readCriteria(query: Record<string, unknown>): { criteria: Filter
       if (parsed.expression && !isNode(parsed.expression)) throw new Error('Invalid expression')
       criteria = copyCriteria(parsed)
     } catch {
-      return { criteria, error: 'This filter URL is invalid. Clear the filters or open a saved filter.' }
+      return { criteria, error: t('invalidUrl') }
     }
   }
   for (const key of criteriaKeys) if (typeof query[key] === 'string') criteria[key] = query[key] as string
   const rawTagIDs = query.tag_id
   const tagIDs = typeof rawTagIDs === 'string' ? [rawTagIDs] : Array.isArray(rawTagIDs) ? rawTagIDs.filter((id): id is string => typeof id === 'string') : []
   if (tagIDs.length) {
-    if (tagIDs.length > 50) return { criteria: { version: 1 }, error: 'This filter URL is invalid. Clear the filters or open a saved filter.' }
-    if (query.tag_match !== undefined && !['any', 'all'].includes(query.tag_match as string)) return { criteria: { version: 1 }, error: 'This filter URL is invalid. Clear the filters or open a saved filter.' }
+    if (tagIDs.length > 50) return { criteria: { version: 1 }, error: t('invalidUrl') }
+    if (query.tag_match !== undefined && !['any', 'all'].includes(query.tag_match as string)) return { criteria: { version: 1 }, error: t('invalidUrl') }
     criteria.tag_ids = [...new Set(tagIDs)]
     criteria.tag_match = query.tag_match === 'all' ? 'all' : 'any'
   } else if (query.tag_match !== undefined) {
-    return { criteria: { version: 1 }, error: 'This filter URL is invalid. Clear the filters or open a saved filter.' }
+    return { criteria: { version: 1 }, error: t('invalidUrl') }
   }
   return { criteria }
 }
@@ -102,10 +107,8 @@ export function ruleOperators(rule: FilterRule): string[] {
   return ['eq', 'contains', ...empty]
 }
 
-export const operatorLabels: Record<string, string> = {
-  eq: 'Equals', contains: 'Contains', lt: 'Before / less than', lte: 'On or before / at most',
-  gt: 'After / greater than', gte: 'On or after / at least', between: 'Between (inclusive)',
-  empty: 'Is empty', not_empty: 'Is not empty', any: 'Includes any', all: 'Includes all', search: 'Search'
+export function operatorLabel(operator: string): string {
+  return t(`operator.${operator}`)
 }
 
 export function newAttributeRule(attribute: Attribute): FilterRule {
@@ -125,30 +128,30 @@ export function countRules(node?: FilterNode): number {
 export function validateExpression(node?: FilterNode): FilterIssue[] {
   const issues: FilterIssue[] = []
   if (!node) return issues
-  if (countRules(node) > 50) issues.push({ path: 'expression', message: 'Use at most 50 rules.' })
+  if (countRules(node) > 50) issues.push({ path: 'expression', message: t('issue.maxRules') })
   function visit(current: FilterNode, path: string, depth: number) {
     const add = (message: string) => issues.push({ path, message })
     if (current.kind === 'group') {
-      if (depth > 5) add('Use at most five group levels.')
-      if (!current.children.length) add('Add a rule or remove this empty group.')
+      if (depth > 5) add(t('issue.maxDepth'))
+      if (!current.children.length) add(t('issue.emptyGroup'))
       current.children.forEach((child, i) => visit(child, `${path}.children[${i}]`, depth + 1))
       return
     }
-    if (!ruleOperators(current).includes(current.operator)) add('Choose a supported comparison.')
-    if (current.field === 'attribute' && (!current.attribute_id || !current.data_type || (current.data_type === 'select' && !current.selection_mode))) add('Choose an attribute to restore its field definition.')
+    if (!ruleOperators(current).includes(current.operator)) add(t('issue.unsupportedComparison'))
+    if (current.field === 'attribute' && (!current.attribute_id || !current.data_type || (current.data_type === 'select' && !current.selection_mode))) add(t('issue.restoreAttribute'))
     if (['empty', 'not_empty'].includes(current.operator)) return
     if (['any', 'all'].includes(current.operator)) {
-      if (!current.values?.length) add('Select at least one value.')
-      if ((current.values?.length || 0) > 100) add('Select at most 100 values.')
+      if (!current.values?.length) add(t('issue.selectValue'))
+      if ((current.values?.length || 0) > 100) add(t('issue.maxValues'))
       return
     }
-    if (current.value === undefined || current.value === '') add('Enter a value.')
-    if (current.data_type === 'number' && (typeof current.value !== 'number' || !Number.isFinite(current.value))) add('Enter a valid number.')
-    if (current.data_type === 'boolean' && typeof current.value !== 'boolean') add('Choose true or false.')
+    if (current.value === undefined || current.value === '') add(t('issue.enterValue'))
+    if (current.data_type === 'number' && (typeof current.value !== 'number' || !Number.isFinite(current.value))) add(t('issue.validNumber'))
+    if (current.data_type === 'boolean' && typeof current.value !== 'boolean') add(t('issue.chooseBoolean'))
     if (current.operator === 'between') {
-      if (current.upper === undefined || current.upper === '') add('Enter the upper bound.')
-      else if (current.data_type === 'number' && (typeof current.upper !== 'number' || !Number.isFinite(current.upper))) add('Enter a valid upper bound.')
-      else if (current.value !== undefined && current.value > current.upper) add('The upper bound must be at least the lower bound.')
+      if (current.upper === undefined || current.upper === '') add(t('issue.enterUpper'))
+      else if (current.data_type === 'number' && (typeof current.upper !== 'number' || !Number.isFinite(current.upper))) add(t('issue.validUpper'))
+      else if (current.value !== undefined && current.value > current.upper) add(t('issue.upperAtLeastLower'))
     }
   }
   visit(node, 'expression', 1)
@@ -157,5 +160,5 @@ export function validateExpression(node?: FilterNode): FilterIssue[] {
 
 export function filterFailure(error: unknown): { message: string, issues: FilterIssue[] } {
   const data = (error as { data?: { error?: string, issues?: FilterIssue[] } } | null)?.data
-  return { message: data?.error || 'Unable to load or save filters. Please try again.', issues: data?.issues || [] }
+  return { message: data?.error || t('failure'), issues: data?.issues || [] }
 }

@@ -4,6 +4,7 @@ import { urlAttributeValue } from '~/utils/urlAttributes'
 
 const props = defineProps<{ required?: boolean, name: string }>()
 const model = defineModel<AssetAttributeValue>()
+const { t } = useI18n()
 const value = computed(() => urlAttributeValue(model.value))
 function update(field: 'url' | 'label', text: string) {
   const next = { url: value.value?.url || '', label: value.value?.label || '', [field]: text }
@@ -17,15 +18,15 @@ function update(field: 'url' | 'label', text: string) {
       :model-value="value?.url || ''"
       type="url"
       placeholder="https://paperless.example/documents/123/"
-      :aria-label="`${props.name} URL`"
+      :aria-label="t('catalog.urlAttribute.urlAria', { name: props.name })"
       :required="required || !!value?.label"
       class="min-w-0 w-full"
       @update:model-value="update('url', String($event))"
     />
     <UInput
       :model-value="value?.label || ''"
-      placeholder="Link text (optional)"
-      :aria-label="`${props.name} link text (optional)`"
+      :placeholder="t('catalog.urlAttribute.linkText')"
+      :aria-label="t('catalog.urlAttribute.linkTextAria', { name: props.name })"
       class="min-w-0 w-full"
       @update:model-value="update('label', String($event))"
     />

@@ -10,8 +10,10 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: undefined,
-  label: 'Icon'
+  label: undefined
 })
+const { t } = useI18n()
+const legend = computed(() => props.label ?? t('catalog.iconPicker.label'))
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
@@ -41,7 +43,7 @@ function showMore() {
 <template>
   <fieldset class="space-y-3">
     <legend class="text-sm font-medium text-default">
-      {{ props.label }}
+      {{ legend }}
     </legend>
 
     <div
@@ -55,16 +57,16 @@ function showMore() {
         />
       </span>
       <span class="min-w-0">
-        <span class="block text-[11px] font-bold uppercase tracking-wider text-muted">Selected</span>
+        <span class="block text-[11px] font-bold uppercase tracking-wider text-muted">{{ t('catalog.iconPicker.selected') }}</span>
         <span class="block truncate text-sm font-semibold text-default">{{ getIconLabel(props.modelValue) }}</span>
       </span>
     </div>
 
     <UInput
       v-model="search"
-      :aria-label="`Search ${props.label.toLowerCase()}s`"
+      :aria-label="t('catalog.iconPicker.searchAria')"
       icon="i-lucide-search"
-      placeholder="Search Lucide icons"
+      :placeholder="t('catalog.iconPicker.searchPlaceholder')"
       autocomplete="off"
       class="w-full"
     />
@@ -78,8 +80,8 @@ function showMore() {
           v-for="icon in visibleIcons"
           :key="icon.name"
           type="button"
-          :aria-label="`${getIconLabel(icon.name)} icon`"
-          :title="`${getIconLabel(icon.name)} icon`"
+          :aria-label="t('catalog.iconPicker.iconName', { name: getIconLabel(icon.name) })"
+          :title="t('catalog.iconPicker.iconName', { name: getIconLabel(icon.name) })"
           :aria-pressed="props.modelValue === icon.name"
           class="flex aspect-square items-center justify-center rounded-xl border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-attic-500"
           :class="props.modelValue === icon.name
@@ -102,7 +104,7 @@ function showMore() {
         class="mt-3"
         @click="showMore"
       >
-        Show more
+        {{ t('catalog.iconPicker.showMore') }}
       </UButton>
     </div>
     <p
@@ -110,14 +112,14 @@ function showMore() {
       role="status"
       class="rounded-xl border border-dashed border-subtle px-4 py-6 text-center text-sm text-muted"
     >
-      No icons match “{{ search.trim() }}”.
+      {{ t('catalog.iconPicker.noMatch', { query: search.trim() }) }}
     </p>
 
     <p
       class="text-xs text-muted"
       aria-live="polite"
     >
-      Showing {{ visibleIcons.length }} of {{ filteredIcons.length }} icons
+      {{ t('catalog.iconPicker.showing', { shown: visibleIcons.length, total: filteredIcons.length }) }}
     </p>
   </fieldset>
 </template>

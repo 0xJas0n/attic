@@ -5,19 +5,20 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const { t, locale } = useI18n()
 const { data: warranties, status } = useApi<WarrantyWithAsset[]>('/api/warranties')
 
 // Search
 const searchQuery = ref('')
 const selectedStatus = ref('all')
 
-const statusFilters = [
-  { value: 'all', label: 'All', icon: 'i-lucide-shield' },
-  { value: 'active', label: 'Active', icon: 'i-lucide-shield-check' },
-  { value: 'expiring', label: 'Expiring', icon: 'i-lucide-clock' },
-  { value: 'expired', label: 'Expired', icon: 'i-lucide-shield-off' },
-  { value: 'no_date', label: 'No end date', icon: 'i-lucide-calendar-x' }
-]
+const statusFilters = computed(() => [
+  { value: 'all', label: t('admin.warranties.filter.all'), icon: 'i-lucide-shield' },
+  { value: 'active', label: t('admin.warranties.filter.active'), icon: 'i-lucide-shield-check' },
+  { value: 'expiring', label: t('admin.warranties.filter.expiring'), icon: 'i-lucide-clock' },
+  { value: 'expired', label: t('admin.warranties.filter.expired'), icon: 'i-lucide-shield-off' },
+  { value: 'no_date', label: t('admin.warranties.filter.noDate'), icon: 'i-lucide-calendar-x' }
+])
 
 // Pagination
 const currentPage = ref(1)
@@ -103,7 +104,7 @@ function getStatusStyle(status: string): { icon: string, bgColor: string, textCo
         bgColor: 'bg-emerald-50 dark:bg-emerald-900/30',
         textColor: 'text-emerald-700 dark:text-emerald-300',
         borderColor: 'border-emerald-100 dark:border-emerald-900/50',
-        label: 'Active'
+        label: t('admin.warranties.status.active')
       }
     case 'expiring':
       return {
@@ -111,7 +112,7 @@ function getStatusStyle(status: string): { icon: string, bgColor: string, textCo
         bgColor: 'bg-amber-50 dark:bg-amber-900/30',
         textColor: 'text-amber-700 dark:text-amber-300',
         borderColor: 'border-amber-100 dark:border-amber-900/50',
-        label: 'Expiring Soon'
+        label: t('admin.warranties.status.expiring')
       }
     case 'expired':
       return {
@@ -119,7 +120,7 @@ function getStatusStyle(status: string): { icon: string, bgColor: string, textCo
         bgColor: 'bg-red-50 dark:bg-red-900/30',
         textColor: 'text-red-700 dark:text-red-300',
         borderColor: 'border-red-100 dark:border-red-900/50',
-        label: 'Expired'
+        label: t('admin.warranties.status.expired')
       }
     default:
       return {
@@ -127,7 +128,7 @@ function getStatusStyle(status: string): { icon: string, bgColor: string, textCo
         bgColor: 'bg-slate-100 dark:bg-slate-800',
         textColor: 'text-slate-700 dark:text-slate-300',
         borderColor: 'border-slate-200 dark:border-slate-700',
-        label: 'No End Date'
+        label: t('admin.warranties.status.noDate')
       }
   }
 }
@@ -142,7 +143,7 @@ function getWarrantyIcon(warranty: WarrantyWithAsset): { icon: string, bgColor: 
 // Format date
 function formatDate(dateStr?: string): string {
   if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString(locale.value, {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
@@ -156,13 +157,13 @@ function formatDate(dateStr?: string): string {
     <header>
       <div>
         <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-          Coverage center
+          {{ t('admin.warranties.eyebrow') }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          Warranties
+          {{ t('admin.warranties.title') }}
         </h1>
         <p class="mt-1 text-sm text-muted">
-          See what is protected, what needs attention, and what has expired.
+          {{ t('admin.warranties.subtitle') }}
         </p>
       </div>
     </header>
@@ -192,7 +193,7 @@ function formatDate(dateStr?: string): string {
         <UInput
           v-model="searchQuery"
           icon="i-lucide-search"
-          placeholder="Search asset or provider"
+          :placeholder="t('admin.warranties.searchPlaceholder')"
           class="w-full lg:w-64"
           size="lg"
         />
@@ -224,13 +225,13 @@ function formatDate(dateStr?: string): string {
           />
         </div>
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No warranties yet
+          {{ t('admin.warranties.emptyTitle') }}
         </h3>
         <p class="text-sm text-muted mb-4 max-w-sm">
-          Add warranty information to your assets to track coverage and expiration dates.
+          {{ t('admin.warranties.emptyBody') }}
         </p>
         <UButton to="/assets">
-          View Assets
+          {{ t('admin.warranties.viewAssets') }}
         </UButton>
       </div>
 
@@ -244,17 +245,17 @@ function formatDate(dateStr?: string): string {
           class="w-12 h-12 text-mist-300 mb-4"
         />
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No results found
+          {{ t('admin.warranties.noResults') }}
         </h3>
         <p class="text-sm text-muted">
-          No warranties match these filters.
+          {{ t('admin.warranties.noMatch') }}
         </p>
         <button
           type="button"
           class="mt-2 text-sm font-semibold text-attic-500"
           @click="searchQuery = ''; selectedStatus = 'all'"
         >
-          Clear filters
+          {{ t('admin.warranties.clearFilters') }}
         </button>
       </div>
 
@@ -265,19 +266,19 @@ function formatDate(dateStr?: string): string {
             <thead class="bg-mist-50/50 dark:bg-mist-700/30 border-b border-mist-100 dark:border-mist-700">
               <tr>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Asset
+                  {{ t('admin.warranties.colAsset') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Provider
+                  {{ t('admin.warranties.colProvider') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Status
+                  {{ t('admin.warranties.colStatus') }}
                 </th>
                 <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-muted">
-                  Expires
+                  {{ t('admin.warranties.colExpires') }}
                 </th>
                 <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-muted">
-                  Actions
+                  {{ t('admin.warranties.colActions') }}
                 </th>
               </tr>
             </thead>
@@ -320,7 +321,7 @@ function formatDate(dateStr?: string): string {
                     v-else
                     class="text-sm text-mist-300 dark:text-mist-600 italic"
                   >
-                    Not specified
+                    {{ t('admin.warranties.notSpecified') }}
                   </span>
                 </td>
 
@@ -349,13 +350,13 @@ function formatDate(dateStr?: string): string {
                       class="text-xs text-muted"
                     >
                       <template v-if="getDaysUntilExpiry(warranty)! < 0">
-                        {{ Math.abs(getDaysUntilExpiry(warranty)!) }} days ago
+                        {{ t('admin.warranties.daysAgo', { count: Math.abs(getDaysUntilExpiry(warranty)!) }) }}
                       </template>
                       <template v-else-if="getDaysUntilExpiry(warranty) === 0">
-                        Expires today
+                        {{ t('admin.warranties.expiresToday') }}
                       </template>
                       <template v-else>
-                        {{ getDaysUntilExpiry(warranty) }} days left
+                        {{ t('admin.warranties.daysLeft', { count: getDaysUntilExpiry(warranty) }) }}
                       </template>
                     </span>
                   </div>
@@ -367,13 +368,13 @@ function formatDate(dateStr?: string): string {
                     <NuxtLink
                       :to="`/assets/${warranty.asset_id}?warranty=edit`"
                       class="inline-flex items-center gap-1.5 rounded-lg bg-attic-50 px-2.5 py-1.5 text-xs font-bold text-attic-600 transition-colors hover:bg-attic-100 dark:bg-attic-500/10 dark:text-attic-300"
-                      title="Edit warranty"
+                      :title="t('admin.warranties.editWarranty')"
                     >
                       <UIcon
                         name="i-lucide-pencil"
                         class="w-4 h-4"
                       />
-                      Edit
+                      {{ t('admin.warranties.edit') }}
                     </NuxtLink>
                   </div>
                 </td>
@@ -385,9 +386,9 @@ function formatDate(dateStr?: string): string {
         <!-- Footer with Pagination -->
         <div class="px-6 py-3 border-t border-mist-100 dark:border-mist-700 bg-mist-50/50 dark:bg-mist-700/20 flex items-center justify-between">
           <p class="text-xs text-muted">
-            Showing {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredWarranties.length) }} of {{ filteredWarranties.length }} warranties
+            {{ t('admin.warranties.showing', { from: (currentPage - 1) * itemsPerPage + 1, to: Math.min(currentPage * itemsPerPage, filteredWarranties.length), total: filteredWarranties.length }) }}
             <span v-if="searchQuery && warranties?.length !== filteredWarranties.length">
-              (filtered from {{ warranties?.length || 0 }})
+              {{ t('admin.warranties.filteredFrom', { total: warranties?.length || 0 }) }}
             </span>
           </p>
           <div
@@ -399,17 +400,17 @@ function formatDate(dateStr?: string): string {
               :disabled="currentPage === 1"
               @click="prevPage"
             >
-              Prev
+              {{ t('admin.warranties.prev') }}
             </button>
             <span class="text-xs text-muted px-2">
-              Page {{ currentPage }} of {{ totalPages }}
+              {{ t('admin.warranties.page', { page: currentPage, pages: totalPages }) }}
             </span>
             <button
               class="px-3 py-1.5 text-xs font-medium border border-mist-200 dark:border-mist-600 rounded-lg hover:bg-mist-100 dark:hover:bg-mist-700 text-mist-600 dark:text-mist-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               :disabled="currentPage === totalPages"
               @click="nextPage"
             >
-              Next
+              {{ t('admin.warranties.next') }}
             </button>
           </div>
         </div>

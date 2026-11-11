@@ -7,6 +7,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const toast = useToast()
 const apiFetch = useApiFetch()
 
@@ -42,11 +43,11 @@ const descriptionCount = computed(() => form.description.length)
 // Save condition
 async function saveCondition() {
   if (!form.label.trim()) {
-    toast.add({ title: 'Please enter a condition label', color: 'error' })
+    toast.add({ title: t('admin.conditions.labelRequired'), color: 'error' })
     return
   }
   if (!form.code.trim()) {
-    toast.add({ title: 'Please enter a condition code', color: 'error' })
+    toast.add({ title: t('admin.conditions.codeRequired'), color: 'error' })
     return
   }
 
@@ -62,10 +63,10 @@ async function saveCondition() {
       })
     })
 
-    toast.add({ title: 'Condition updated successfully', color: 'success' })
+    toast.add({ title: t('admin.conditions.updated'), color: 'success' })
     router.push('/conditions')
   } catch {
-    toast.add({ title: 'Failed to update condition', color: 'error' })
+    toast.add({ title: t('admin.conditions.updateFailed'), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -100,16 +101,16 @@ function cancel() {
         class="w-12 h-12 text-red-500 mb-4"
       />
       <h2 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-        Condition not found
+        {{ t('admin.conditions.notFound') }}
       </h2>
       <p class="text-muted mb-4">
-        The condition you're looking for doesn't exist or has been deleted.
+        {{ t('admin.conditions.notFoundBody') }}
       </p>
       <UButton
         to="/conditions"
         variant="ghost"
       >
-        Back to Conditions
+        {{ t('admin.conditions.backToConditions') }}
       </UButton>
     </div>
 
@@ -123,27 +124,27 @@ function cancel() {
               to="/"
               class="hover:text-attic-500 transition-colors"
             >
-              Home
+              {{ t('admin.conditions.home') }}
             </NuxtLink>
             <span class="mx-2 text-mist-300 dark:text-mist-600">/</span>
             <NuxtLink
               to="/conditions"
               class="hover:text-attic-500 transition-colors"
             >
-              Conditions
+              {{ t('admin.conditions.title') }}
             </NuxtLink>
             <span class="mx-2 text-mist-300 dark:text-mist-600">/</span>
-            <span class="font-bold text-attic-500">Edit</span>
+            <span class="font-bold text-attic-500">{{ t('admin.conditions.crumbEdit') }}</span>
           </nav>
           <div>
             <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-              Condition editor
+              {{ t('admin.conditions.editor') }}
             </p>
             <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-              Edit {{ condition?.label }}
+              {{ t('admin.conditions.editTitle', { label: condition?.label }) }}
             </h1>
             <p class="mt-1 text-sm text-muted">
-              Update how this quality level appears throughout the collection.
+              {{ t('admin.conditions.editSubtitle') }}
             </p>
           </div>
         </div>
@@ -154,7 +155,7 @@ function cancel() {
             class="rounded-xl font-semibold"
             @click="cancel"
           >
-            Cancel
+            {{ t('admin.conditions.cancel') }}
           </UButton>
           <UButton
             icon="i-lucide-save"
@@ -162,7 +163,7 @@ function cancel() {
             class="rounded-xl font-bold shadow-primary"
             @click="saveCondition"
           >
-            Save Changes
+            {{ t('admin.conditions.saveChanges') }}
           </UButton>
         </div>
       </div>
@@ -178,9 +179,9 @@ function cancel() {
               />
             </div><div>
               <h2 class="font-extrabold text-mist-950 dark:text-white">
-                Condition details
+                {{ t('admin.conditions.details') }}
               </h2><p class="text-xs text-muted">
-                The code stays fixed so existing integrations remain stable.
+                {{ t('admin.conditions.detailsHintEdit') }}
               </p>
             </div>
           </div>
@@ -188,23 +189,23 @@ function cancel() {
             <!-- Label Field -->
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Condition Label
+                {{ t('admin.conditions.label') }}
               </label>
               <input
                 v-model="form.label"
                 type="text"
-                placeholder="e.g. Like New"
+                :placeholder="t('admin.conditions.labelPlaceholder')"
                 class="w-full px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all placeholder:text-dimmed font-medium text-mist-950 dark:text-white"
               >
               <p class="text-xs text-muted mt-1">
-                The display name shown when selecting a condition.
+                {{ t('admin.conditions.labelHint') }}
               </p>
             </div>
 
             <!-- Code Field (disabled for edit) -->
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Condition Code
+                {{ t('admin.conditions.code') }}
               </label>
               <input
                 v-model="form.code"
@@ -213,21 +214,21 @@ function cancel() {
                 class="w-full px-4 py-3 rounded-lg bg-mist-100 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 outline-none font-mono text-sm text-muted dark:text-mist-400 uppercase cursor-not-allowed"
               >
               <p class="text-xs text-muted mt-1">
-                The code cannot be changed after creation.
+                {{ t('admin.conditions.codeHintEdit') }}
               </p>
             </div>
 
             <!-- Description Field -->
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Description
-                <span class="font-normal text-muted">(optional)</span>
+                {{ t('admin.conditions.description') }}
+                <span class="font-normal text-muted">{{ t('admin.conditions.optional') }}</span>
               </label>
               <textarea
                 v-model="form.description"
                 rows="3"
                 maxlength="200"
-                placeholder="Describe what this condition means..."
+                :placeholder="t('admin.conditions.descriptionPlaceholder')"
                 class="w-full px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all placeholder:text-dimmed text-sm resize-none text-mist-950 dark:text-white"
               />
               <div class="flex justify-end mt-1">
@@ -238,7 +239,7 @@ function cancel() {
             <!-- Sort Order Field -->
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Sort Order
+                {{ t('admin.conditions.sortOrder') }}
               </label>
               <input
                 v-model.number="form.sort_order"
@@ -247,7 +248,7 @@ function cancel() {
                 class="w-32 px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all text-sm text-mist-950 dark:text-white"
               >
               <p class="text-xs text-muted mt-1">
-                Controls the display order. Lower numbers appear first.
+                {{ t('admin.conditions.sortOrderHint') }}
               </p>
             </div>
           </div>
@@ -262,10 +263,10 @@ function cancel() {
             />
             <div>
               <p class="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                Note
+                {{ t('admin.conditions.noteTitle') }}
               </p>
               <p class="text-sm text-amber-600 dark:text-amber-400 mt-1">
-                Changing the label or sort order will update how this condition appears across all assets using it.
+                {{ t('admin.conditions.noteBody') }}
               </p>
             </div>
           </div>
@@ -276,7 +277,7 @@ function cancel() {
             color="neutral"
             @click="cancel"
           >
-            Cancel
+            {{ t('admin.conditions.cancel') }}
           </UButton>
           <UButton
             icon="i-lucide-save"
@@ -284,7 +285,7 @@ function cancel() {
             class="rounded-xl shadow-primary"
             @click="saveCondition"
           >
-            Save changes
+            {{ t('admin.conditions.saveChangesLower') }}
           </UButton>
         </div>
       </div>

@@ -7,6 +7,7 @@ const emit = defineEmits<{ changed: [locationID: string] }>()
 const config = useRuntimeConfig()
 const api = useApiFetch()
 const toast = useToast()
+const { t } = useI18n()
 interface FailedPhoto { file: File, error: string, retryable: boolean }
 interface GalleryState {
   photos: LocationPhoto[]
@@ -51,7 +52,7 @@ async function loadPhotos(id: string) {
       gallery.loaded = true
     }
   } catch {
-    if (gallery.request === request) gallery.error = 'Could not load photos. Please try again.'
+    if (gallery.request === request) gallery.error = t('catalog.locationPhotos.loadFailed')
   } finally {
     if (gallery.request === request) gallery.loading = false
   }
@@ -73,7 +74,7 @@ async function uploadFiles(id: string, files: File[]) {
   let succeeded = 0
   try {
     for (const file of files) {
-      const validationError = getLocationPhotoError(file)
+      const validationError = getLocationPhotoError(file, t)
       if (validationError) {
         gallery.failed.push({ file, error: validationError, retryable: false })
         gallery.completed++
@@ -86,13 +87,13 @@ async function uploadFiles(id: string, files: File[]) {
         const result = await response.json().catch(() => null)
         if (!response.ok) {
           if (response.status === 401) navigateTo('/login')
-          gallery.failed.push({ file, error: result?.error || 'Upload failed. Please try again.', retryable: response.status >= 500 || response.status === 429 })
+          gallery.failed.push({ file, error: result?.error || t('catalog.locationPhotos.uploadFailed'), retryable: response.status >= 500 || response.status === 429 })
         } else {
           gallery.photos.push(result as LocationPhoto)
           succeeded++
         }
       } catch {
-        gallery.failed.push({ file, error: 'Connection lost. Please try again.', retryable: true })
+        gallery.failed.push({ file, error: t('catalog.locationPhotos.connectionLost'), retryable: true })
       } finally { gallery.completed++ }
     }
   } finally {
@@ -138,14 +139,14 @@ async function setCover(id: string, photoID: string, selected: boolean) {
     await loadPhotos(id)
     emit('changed', id)
   } catch {
-    toast.add({ title: 'Could not change cover photo', color: 'error' })
+    toast.add({ title: t('catalog.locationPhotos.coverFailed'), color: 'error' })
   } finally { gallery.mutating = false }
 }
 function photoActions(photo: LocationPhoto) {
   const id = props.location.id
   return [
-    { label: photo.is_cover ? 'Remove cover' : 'Set as cover', icon: photo.is_cover ? 'i-lucide-star-off' : 'i-lucide-star', onSelect: () => setCover(id, photo.id, !photo.is_cover) },
-    { label: 'Delete photo', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => {
+    { label: photo.is_cover ? t('catalog.locationPhotos.removeCover') : t('catalog.locationPhotos.setCover'), icon: photo.is_cover ? 'i-lucide-star-off' : 'i-lucide-star', onSelect: () => setCover(id, photo.id, !photo.is_cover) },
+    { label: t('catalog.locationPhotos.deletePhoto'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => {
       deleting.value = { locationID: id, photo }
       deleteError.value = ''
       deleteOpen.value = true
@@ -168,7 +169,7 @@ async function deletePhoto() {
     deleteOpen.value = false
     emit('changed', id)
   } catch {
-    deleteError.value = 'Could not delete this photo. Please try again.'
+    deleteError.value = t('catalog.locationPhotos.deleteFailed')
   } finally { gallery.mutating = false }
 }
 function openPhoto(photo: LocationPhoto) {
@@ -195,7 +196,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
   <section
     class="relative rounded-2xl border p-4 transition-colors sm:p-5"
     :class="dragging ? 'border-attic-500 bg-attic-50 dark:bg-attic-500/10' : 'border-mist-200 dark:border-mist-700'"
-    aria-label="Location photos"
+    :aria-label="t('catalog.locationPhotos.sectionLabel')"
     @dragenter.prevent="dragEnter"
     @dragover.prevent
     @dragleave.prevent="dragLeave"
@@ -204,7 +205,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
     <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2">
         <h2 class="text-sm font-extrabold text-mist-950 dark:text-white">
-          Photos
+          {{ t('catalog.locationPhotos.title') }}
         </h2>
         <span class="rounded-md bg-mist-100 px-2 py-0.5 text-xs text-muted dark:bg-mist-700">{{ state.photos.length }}</span>
       </div>
@@ -214,7 +215,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
           variant="ghost"
           icon="i-lucide-refresh-cw"
           size="sm"
-          aria-label="Refresh photos"
+          :aria-label="t('catalog.locationPhotos.refresh')"
           :disabled="state.loading || state.uploading || state.mutating"
           @click="loadPhotos(location.id)"
         />
@@ -223,7 +224,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
           :disabled="state.loading || state.uploading || state.mutating"
           @click="fileInput?.click()"
         >
-          Add photos
+          {{ t('catalog.locationPhotos.add') }}
         </UButton>
       </div>
       <input
@@ -231,7 +232,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
         type="file"
         multiple
         accept="image/jpeg,image/png,image/gif"
-        aria-label="Add location photos"
+        :aria-label="t('catalog.locationPhotos.addInput')"
         class="sr-only"
         :disabled="state.loading || state.uploading || state.mutating"
         @change="chooseFiles"
@@ -242,11 +243,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
       class="mb-4 rounded-xl bg-mist-50 p-3 text-xs text-muted dark:bg-mist-900/50"
       role="status"
     >
-      <p>Uploading {{ Math.min(state.completed + 1, state.total) }} of {{ state.total }} photos…</p>
+      <p>{{ t('catalog.locationPhotos.uploading', { current: Math.min(state.completed + 1, state.total), total: state.total }) }}</p>
       <progress
         :value="state.completed"
         :max="state.total"
-        aria-label="Photo upload progress"
+        :aria-label="t('catalog.locationPhotos.progress')"
         class="mt-2 h-1.5 w-full accent-attic-500"
       />
     </div>
@@ -256,7 +257,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
       role="alert"
     >
       <p class="text-sm font-semibold text-mist-950 dark:text-white">
-        Some photos weren't uploaded
+        {{ t('catalog.locationPhotos.someFailed') }}
       </p>
       <ul class="mt-2 space-y-2">
         <li
@@ -272,7 +273,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
             variant="ghost"
             icon="i-lucide-x"
             size="xs"
-            :aria-label="`Dismiss ${failure.file.name}`"
+            :aria-label="t('catalog.locationPhotos.dismiss', { name: failure.file.name })"
             :disabled="state.uploading"
             @click="state.failed.splice(index, 1)"
           />
@@ -287,7 +288,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
         :disabled="state.uploading || state.mutating"
         @click="retryFailed"
       >
-        Retry failed photos
+        {{ t('catalog.locationPhotos.retry') }}
       </UButton>
     </div>
     <div
@@ -300,13 +301,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
         class="font-semibold underline"
         @click="loadPhotos(location.id)"
       >
-        Try again
+        {{ t('common.tryAgain') }}
       </button>
     </div>
     <div
       v-if="state.loading && !state.loaded"
       class="grid grid-cols-2 gap-3 sm:grid-cols-3"
-      aria-label="Loading photos"
+      :aria-label="t('catalog.locationPhotos.loading')"
     >
       <USkeleton
         v-for="index in 3"
@@ -327,7 +328,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
         <button
           type="button"
           class="relative block aspect-[4/3] w-full overflow-hidden bg-mist-100 focus-visible:outline-2 focus-visible:outline-attic-500 dark:bg-mist-900"
-          :aria-label="`View photo ${index + 1}: ${photo.file_name}`"
+          :aria-label="t('catalog.locationPhotos.viewPhoto', { index: index + 1, name: photo.file_name })"
           :disabled="!photo.url"
           @click="openPhoto(photo)"
         >
@@ -350,7 +351,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
           ><UIcon
             name="i-lucide-star"
             class="size-3"
-          />Cover</span>
+          />{{ t('catalog.locationPhotos.cover') }}</span>
         </button>
         <div class="flex items-center justify-between gap-1 px-2 py-1.5">
           <span
@@ -363,7 +364,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
               variant="ghost"
               icon="i-lucide-ellipsis"
               size="sm"
-              :aria-label="`Photo actions for ${photo.file_name}`"
+              :aria-label="t('catalog.locationPhotos.actionsFor', { name: photo.file_name })"
               :disabled="state.uploading || state.mutating"
             />
           </UDropdownMenu>
@@ -379,28 +380,28 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
         class="mb-2 size-7 text-mist-400"
       />
       <p class="text-sm font-semibold text-mist-950 dark:text-white">
-        Recognize this space at a glance
+        {{ t('catalog.locationPhotos.emptyTitle') }}
       </p>
       <p class="mt-1 text-xs leading-5 text-muted">
-        Add photos of the box, shelf or room. Drop photos here or use Add photos.
+        {{ t('catalog.locationPhotos.emptyBody') }}
       </p>
     </div>
     <p class="mt-3 text-xs text-muted">
-      JPEG, PNG or GIF · Up to 10 MB each · Set a cover to replace the location icon.
+      {{ t('catalog.locationPhotos.limits') }}
     </p>
     <div
       v-if="dragging"
       class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-attic-50/90 text-sm font-bold text-attic-600 dark:bg-mist-900/90 dark:text-attic-300"
     >
-      Drop photos to add them
+      {{ t('catalog.locationPhotos.drop') }}
     </div>
   </section>
 
   <UModal
     v-model:open="viewerOpen"
     fullscreen
-    :title="activePhoto?.file_name || 'Location photo'"
-    description="Browse location photos using the navigation buttons or arrow keys."
+    :title="activePhoto?.file_name || t('catalog.locationPhotos.viewerTitle')"
+    :description="t('catalog.locationPhotos.viewerHint')"
   >
     <template #content>
       <div class="flex h-dvh w-screen flex-col bg-mist-950 text-white">
@@ -409,7 +410,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
             <p class="truncate text-sm font-semibold">
               {{ activePhoto?.file_name }}
             </p><p class="mt-1 text-xs text-white/60">
-              {{ activeIndex + 1 }} of {{ state.photos.length }} photos
+              {{ t('catalog.locationPhotos.position', { index: activeIndex + 1, total: state.photos.length }) }}
             </p>
           </div>
           <UButton
@@ -417,7 +418,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
             variant="ghost"
             icon="i-lucide-x"
             class="text-white hover:bg-white/10"
-            aria-label="Close photo viewer"
+            :aria-label="t('catalog.locationPhotos.closeViewer')"
             @click="viewerOpen = false"
           />
         </header>
@@ -435,7 +436,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
             variant="ghost"
             icon="i-lucide-chevron-left"
             class="absolute left-2 top-1/2 text-white hover:bg-white/10 sm:left-6"
-            aria-label="Previous photo"
+            :aria-label="t('catalog.locationPhotos.previous')"
             @click="adjacentPhoto(-1)"
           />
           <UButton
@@ -444,7 +445,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
             variant="ghost"
             icon="i-lucide-chevron-right"
             class="absolute right-2 top-1/2 text-white hover:bg-white/10 sm:right-6"
-            aria-label="Next photo"
+            :aria-label="t('catalog.locationPhotos.next')"
             @click="adjacentPhoto(1)"
           />
         </div>
@@ -453,8 +454,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
   </UModal>
   <UModal
     v-model:open="deleteOpen"
-    title="Delete photo?"
-    :description="`Remove “${deleting?.photo.file_name || 'this photo'}” from this location? Other photos and stored assets will stay in place.`"
+    :title="t('catalog.locationPhotos.deleteTitle')"
+    :description="t('catalog.locationPhotos.deleteBody', { name: deleting?.photo.file_name || t('catalog.locationPhotos.thisPhoto') })"
     :dismissible="!deletingState?.mutating"
   >
     <template #body>
@@ -468,7 +469,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
         v-else
         class="text-sm text-muted"
       >
-        This photo will be permanently deleted.
+        {{ t('catalog.locationPhotos.deleteNote') }}
       </p>
     </template>
     <template #footer>
@@ -479,13 +480,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', viewerKeydown))
           :disabled="deletingState?.mutating"
           @click="deleteOpen = false"
         >
-          Cancel
+          {{ t('catalog.shared.cancel') }}
         </UButton><UButton
           color="error"
           :loading="deletingState?.mutating"
           @click="deletePhoto"
         >
-          Delete photo
+          {{ t('catalog.locationPhotos.deletePhoto') }}
         </UButton>
       </div>
     </template>

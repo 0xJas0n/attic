@@ -5,6 +5,7 @@ definePageMeta({ middleware: 'auth' })
 const { data: tags, status, error, refresh } = useApi<Tag[]>('/api/tags')
 const apiFetch = useApiFetch()
 const toast = useToast()
+const { t } = useI18n()
 const search = ref('')
 const editorOpen = ref(false)
 const editing = ref<Tag>()
@@ -23,9 +24,9 @@ const filtered = computed(() => {
 const summary = computed(() => {
   const items = tags.value || []
   return [
-    { label: 'Tags', value: status.value === 'success' ? items.length : '—' },
-    { label: 'In use', value: status.value === 'success' ? items.filter(tag => tag.asset_count > 0).length : '—' },
-    { label: 'Assignments', value: status.value === 'success' ? items.reduce((total, tag) => total + tag.asset_count, 0) : '—' }
+    { label: t('catalog.tags.title'), value: status.value === 'success' ? items.length : '—' },
+    { label: t('catalog.tags.inUse'), value: status.value === 'success' ? items.filter(tag => tag.asset_count > 0).length : '—' },
+    { label: t('catalog.tags.assignments'), value: status.value === 'success' ? items.reduce((total, tag) => total + tag.asset_count, 0) : '—' }
   ]
 })
 
@@ -47,10 +48,10 @@ async function save() {
       body: JSON.stringify({ name: form.name.trim(), description: form.description.trim() || undefined })
     })
     editorOpen.value = false
-    toast.add({ title: editing.value ? 'Tag updated' : 'Tag created', color: 'success' })
+    toast.add({ title: editing.value ? t('catalog.tags.updated') : t('catalog.tags.created'), color: 'success' })
     await refresh()
   } catch (err) {
-    formError.value = (err as { data?: { error?: string } })?.data?.error || 'Could not save tag. Please try again.'
+    formError.value = (err as { data?: { error?: string } })?.data?.error || t('catalog.tags.saveFailed')
   } finally { busy.value = false }
 }
 
@@ -60,10 +61,10 @@ async function remove() {
   try {
     await apiFetch(`/api/tags/${deleting.value.id}`, { method: 'DELETE' })
     deleting.value = null
-    toast.add({ title: 'Tag deleted. Your assets are safe.', color: 'success' })
+    toast.add({ title: t('catalog.tags.deleted'), color: 'success' })
     await refresh()
   } catch (err) {
-    const message = (err as { data?: { error?: string } })?.data?.error || 'Could not delete tag. Please try again.'
+    const message = (err as { data?: { error?: string } })?.data?.error || t('catalog.tags.deleteFailed')
     toast.add({ title: message, color: 'error' })
   } finally { busy.value = false }
 }
@@ -74,13 +75,13 @@ async function remove() {
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-          Flexible organization
+          {{ t('catalog.tags.eyebrow') }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          Tags
+          {{ t('catalog.tags.title') }}
         </h1>
         <p class="mt-1 max-w-2xl text-sm text-muted">
-          Add lightweight shared tags to assets, then rename and describe them here.
+          {{ t('catalog.tags.intro') }}
         </p>
       </div>
       <UButton
@@ -88,14 +89,14 @@ async function remove() {
         class="shrink-0 rounded-xl font-bold shadow-primary"
         @click="edit()"
       >
-        New tag
+        {{ t('catalog.tags.new') }}
       </UButton>
     </header>
     <LibrarySummary :items="summary" />
     <LibraryToolbar
       v-model="search"
-      title="Tag library"
-      placeholder="Search tags"
+      :title="t('catalog.tags.library')"
+      :placeholder="t('catalog.tags.search')"
       :count="filtered.length"
       :total="tags?.length || 0"
     />
@@ -104,19 +105,19 @@ async function remove() {
       role="status"
       class="py-12 text-center text-muted"
     >
-      Loading tags…
+      {{ t('catalog.tags.loading') }}
     </div>
     <div
       v-else-if="error"
       role="alert"
       class="attic-panel rounded-2xl p-8 text-center"
     >
-      <p>Tags could not be loaded.</p>
+      <p>{{ t('catalog.tags.loadError') }}</p>
       <UButton
         class="mt-3"
         @click="refresh()"
       >
-        Try again
+        {{ t('common.tryAgain') }}
       </UButton>
     </div>
     <div
@@ -128,24 +129,24 @@ async function remove() {
         class="size-12 text-attic-500"
       />
       <h2 class="mt-4 text-xl font-bold text-default">
-        Create your first tag
+        {{ t('catalog.tags.emptyTitle') }}
       </h2>
       <p class="mx-auto mt-2 max-w-md text-sm text-muted">
-        Tags can also be created directly while adding or editing an asset.
+        {{ t('catalog.tags.emptyBody') }}
       </p>
       <UButton
         class="mt-5"
         icon="i-lucide-plus"
         @click="edit()"
       >
-        New tag
+        {{ t('catalog.tags.new') }}
       </UButton>
     </div>
     <div
       v-else-if="!filtered.length"
       class="attic-panel rounded-2xl px-6 py-14 text-center text-muted"
     >
-      No matching tags
+      {{ t('catalog.tags.noMatch') }}
     </div>
     <div
       v-else
@@ -167,23 +168,23 @@ async function remove() {
               class="font-bold text-mist-950 hover:text-attic-500 dark:text-white"
             >{{ tag.name }}</NuxtLink>
             <p class="mt-1 text-sm text-muted">
-              {{ tag.description || 'No description' }}
+              {{ tag.description || t('catalog.tags.noDescription') }}
             </p>
           </div>
-          <span class="text-xs font-semibold text-muted">{{ tag.asset_count }} {{ tag.asset_count === 1 ? 'asset' : 'assets' }}</span>
+          <span class="text-xs font-semibold text-muted">{{ t('catalog.shared.assetCount', tag.asset_count) }}</span>
           <div class="flex gap-1">
             <UButton
               icon="i-lucide-pencil"
               variant="ghost"
               color="neutral"
-              :aria-label="`Edit ${tag.name}`"
+              :aria-label="t('catalog.tags.editAria', { name: tag.name })"
               @click="edit(tag)"
             />
             <UButton
               icon="i-lucide-trash-2"
               variant="ghost"
               color="error"
-              :aria-label="`Delete ${tag.name}`"
+              :aria-label="t('catalog.tags.deleteAria', { name: tag.name })"
               @click="deleting = tag"
             />
           </div>
@@ -192,7 +193,7 @@ async function remove() {
     </div>
     <UModal
       v-model:open="editorOpen"
-      :title="editing ? 'Edit tag' : 'New tag'"
+      :title="editing ? t('catalog.tags.edit') : t('catalog.tags.new')"
       :dismissible="!busy"
     >
       <template #body>
@@ -201,7 +202,7 @@ async function remove() {
           @submit.prevent="save"
         >
           <UFormField
-            label="Name"
+            :label="t('catalog.shared.name')"
             required
           >
             <UInput
@@ -211,7 +212,7 @@ async function remove() {
               autofocus
             />
           </UFormField>
-          <UFormField label="Description">
+          <UFormField :label="t('catalog.shared.description')">
             <UTextarea
               v-model="form.description"
               maxlength="2000"
@@ -234,21 +235,21 @@ async function remove() {
           :disabled="busy"
           @click="editorOpen = false"
         >
-          Cancel
+          {{ t('catalog.shared.cancel') }}
         </UButton>
         <UButton
           :loading="busy"
           :disabled="!form.name.trim()"
           @click="save"
         >
-          Save
+          {{ t('catalog.shared.save') }}
         </UButton>
       </template>
     </UModal>
     <UModal
       v-model:open="deleteOpen"
-      title="Delete tag"
-      :description="`Remove “${deleting?.name || ''}” from ${deleting?.asset_count || 0} assets? The assets will not be deleted.`"
+      :title="t('catalog.tags.deleteTitle')"
+      :description="t('catalog.tags.deleteBody', { name: deleting?.name || '', count: deleting?.asset_count || 0 })"
       :dismissible="!busy"
     >
       <template #footer>
@@ -258,14 +259,14 @@ async function remove() {
           :disabled="busy"
           @click="deleting = null"
         >
-          Cancel
+          {{ t('catalog.shared.cancel') }}
         </UButton>
         <UButton
           color="error"
           :loading="busy"
           @click="remove"
         >
-          Delete tag
+          {{ t('catalog.tags.delete') }}
         </UButton>
       </template>
     </UModal>

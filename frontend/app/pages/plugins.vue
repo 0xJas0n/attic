@@ -4,6 +4,7 @@ import { compareImportSources, importProvider, importSetupGroups, importSourceIc
 
 definePageMeta({ middleware: 'auth' })
 
+const { t } = useI18n()
 const { data, status, error, refresh } = useApi<PluginsResponse>('/api/plugins')
 const { features } = useFeatures()
 const plugins = computed(() => data.value?.plugins || [])
@@ -15,10 +16,10 @@ const selectedPluginId = ref<string>()
 const panelOpen = ref(false)
 const detailSource = ref<Plugin | null>(null)
 const setupGroup = ref<ImportSetupGroup | null>(null)
-const panelTitle = computed(() => setupGroup.value ? `Connect ${setupGroup.value.provider.name}` : detailSource.value?.category_name || 'Source details')
+const panelTitle = computed(() => setupGroup.value ? t('admin.plugins.connectTitle', { name: setupGroup.value.provider.name }) : detailSource.value?.category_name || t('admin.plugins.sourceDetails'))
 const panelDescription = computed(() => setupGroup.value
-  ? `Enable ${setupGroup.value.label} imports on your Attic server.`
-  : `${detailSource.value ? importProvider(detailSource.value).name : 'Catalog'} source details`)
+  ? t('admin.plugins.enableDescription', { label: setupGroup.value.label })
+  : t('admin.plugins.sourceDescription', { name: detailSource.value ? importProvider(detailSource.value).name : t('admin.plugins.catalog') }))
 let panelTrigger: HTMLElement | null = null
 let pendingImport: Plugin | null = null
 
@@ -64,13 +65,13 @@ function restorePanelFocus(event: Event) {
   <div class="mx-auto max-w-5xl space-y-6 pb-20 sm:pb-6">
     <header>
       <p class="mb-1.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-        Catalog import
+        {{ t('admin.plugins.eyebrow') }}
       </p>
       <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-        Import sources
+        {{ t('admin.plugins.title') }}
       </h1>
       <p class="mt-2 text-sm leading-6 text-muted">
-        Find an item and add its details automatically.
+        {{ t('admin.plugins.subtitle') }}
       </p>
     </header>
 
@@ -83,7 +84,7 @@ function restorePanelFocus(event: Event) {
         name="i-lucide-loader-2"
         class="size-5 animate-spin text-attic-500"
       />
-      Loading import sources…
+      {{ t('admin.plugins.loading') }}
     </div>
     <div
       v-else-if="error || status === 'error'"
@@ -91,10 +92,10 @@ function restorePanelFocus(event: Event) {
       class="attic-panel space-y-3 rounded-2xl p-6"
     >
       <h2 class="font-bold text-mist-950 dark:text-white">
-        Couldn’t load import sources
+        {{ t('admin.plugins.loadFailed') }}
       </h2>
       <p class="text-sm text-muted">
-        Please try again to see your available catalogs.
+        {{ t('admin.plugins.loadFailedBody') }}
       </p>
       <UButton
         variant="outline"
@@ -102,7 +103,7 @@ function restorePanelFocus(event: Event) {
         class="min-h-11"
         @click="refresh()"
       >
-        Try again
+        {{ t('admin.plugins.tryAgain') }}
       </UButton>
     </div>
     <div
@@ -114,10 +115,10 @@ function restorePanelFocus(event: Event) {
         class="mb-3 size-8 text-attic-500"
       />
       <h2 class="font-bold text-mist-950 dark:text-white">
-        No import sources available
+        {{ t('admin.plugins.noneTitle') }}
       </h2>
       <p class="mt-2 text-sm text-muted">
-        Catalogs will appear here when they are available on your Attic server.
+        {{ t('admin.plugins.noneBody') }}
       </p>
     </div>
     <template v-else>
@@ -130,7 +131,7 @@ function restorePanelFocus(event: Event) {
             id="configured-heading"
             class="text-sm font-bold text-mist-800 dark:text-mist-100"
           >
-            Configured
+            {{ t('admin.plugins.configured') }}
           </h2>
           <span class="rounded-md bg-attic-50 px-2 py-0.5 text-xs font-bold text-attic-600 dark:bg-attic-500/15 dark:text-attic-300">{{ configured.length }}</span>
         </div>
@@ -162,18 +163,18 @@ function restorePanelFocus(event: Event) {
                 color="neutral"
                 variant="ghost"
                 class="min-h-11 rounded-lg px-3 text-xs font-semibold text-muted"
-                :aria-label="`Details for ${plugin.category_name}`"
+                :aria-label="t('admin.plugins.detailsFor', { name: plugin.category_name })"
                 @click="showDetails(plugin, $event)"
               >
-                Details
+                {{ t('admin.plugins.details') }}
               </UButton>
               <UButton
                 class="min-h-11 rounded-lg px-4 font-bold"
                 icon="i-lucide-download"
-                :aria-label="`Import ${plugin.category_name}`"
+                :aria-label="t('admin.plugins.importName', { name: plugin.category_name })"
                 @click="startImport(plugin)"
               >
-                Import
+                {{ t('admin.plugins.import') }}
               </UButton>
             </div>
           </li>
@@ -188,7 +189,7 @@ function restorePanelFocus(event: Event) {
             id="setup-heading"
             class="text-sm font-bold text-mist-800 dark:text-mist-100"
           >
-            Needs setup
+            {{ t('admin.plugins.needsSetup') }}
           </h2>
           <span class="rounded-md bg-mist-100 px-2 py-0.5 text-xs font-bold text-muted dark:bg-mist-700">{{ setupCount }}</span>
         </div>
@@ -196,7 +197,7 @@ function restorePanelFocus(event: Event) {
           v-if="!configured.length"
           class="mb-3 text-sm leading-6 text-muted"
         >
-          Connect a catalog to start importing items.
+          {{ t('admin.plugins.connectHint') }}
         </p>
         <ul class="attic-panel divide-y divide-mist-100 overflow-hidden rounded-2xl dark:divide-mist-700/60">
           <li
@@ -218,17 +219,17 @@ function restorePanelFocus(event: Event) {
                 {{ group.label }}
               </h3>
               <p class="mt-0.5 text-xs leading-5 text-muted">
-                {{ group.provider.name }} · Server setup required
+                {{ group.provider.name }} · {{ t('admin.plugins.serverSetupRequired') }}
               </p>
             </div>
             <UButton
               color="neutral"
               variant="outline"
               class="ml-[3.25rem] min-h-11 rounded-lg text-xs font-semibold sm:ml-0 sm:shrink-0"
-              :aria-label="`Setup instructions for ${group.provider.name}`"
+              :aria-label="t('admin.plugins.setupInstructionsFor', { name: group.provider.name })"
               @click="showSetup(group, $event)"
             >
-              Setup instructions
+              {{ t('admin.plugins.setupInstructions') }}
             </UButton>
           </li>
         </ul>
@@ -240,7 +241,7 @@ function restorePanelFocus(event: Event) {
         <span class="flex items-center gap-2"><UIcon
           name="i-lucide-circle-help"
           class="size-4"
-        />How importing works</span>
+        />{{ t('admin.plugins.howTitle') }}</span>
         <UIcon
           name="i-lucide-chevron-down"
           class="size-4 transition-transform group-open:rotate-180"
@@ -249,9 +250,9 @@ function restorePanelFocus(event: Event) {
       <ol class="mt-3 grid gap-4 pb-3 sm:grid-cols-3">
         <li
           v-for="(step, index) in [
-            { title: 'Find the item', copy: 'Choose a source and search using its supported identifiers.' },
-            { title: 'Review the match', copy: 'Compare results and select the correct edition or release.' },
-            { title: 'Import and refine', copy: 'Create the asset with metadata, then add your location and notes.' }
+            { title: t('admin.plugins.how.find.title'), copy: t('admin.plugins.how.find.copy') },
+            { title: t('admin.plugins.how.review.title'), copy: t('admin.plugins.how.review.copy') },
+            { title: t('admin.plugins.how.refine.title'), copy: t('admin.plugins.how.refine.copy') }
           ]"
           :key="step.title"
           class="text-sm leading-6"
@@ -287,7 +288,7 @@ function restorePanelFocus(event: Event) {
               id="search-methods-heading"
               class="mb-3 text-sm font-bold"
             >
-              Search by
+              {{ t('admin.plugins.searchBy') }}
             </h3>
             <ul class="flex flex-wrap gap-2">
               <li
@@ -307,7 +308,7 @@ function restorePanelFocus(event: Event) {
               id="imported-fields-heading"
               class="mb-3 text-sm font-bold"
             >
-              Imported fields
+              {{ t('admin.plugins.importedFields') }}
             </h3>
             <dl class="divide-y divide-mist-100 dark:divide-mist-700">
               <div
@@ -333,17 +334,17 @@ function restorePanelFocus(event: Event) {
               id="import-category-heading"
               class="text-sm font-bold"
             >
-              Category
+              {{ t('admin.plugins.category') }}
             </h3>
             <p class="mt-2 text-sm text-muted">
               {{ detailSource.category_name }}
             </p>
             <p class="mt-1 text-xs leading-5 text-muted">
-              {{ detailSource.category_id ? 'Imported items are added to this category.' : 'This category will be initialized when you import an item.' }}
+              {{ detailSource.category_id ? t('admin.plugins.categoryExisting') : t('admin.plugins.categoryNew') }}
             </p>
           </section>
           <p class="text-xs leading-5 text-muted">
-            Configured on your server. Availability and credentials are checked when you search or import.
+            {{ t('admin.plugins.serverNote') }}
           </p>
         </div>
         <div
@@ -352,7 +353,7 @@ function restorePanelFocus(event: Event) {
         >
           <div class="rounded-xl bg-mist-50 p-4 dark:bg-mist-800">
             <p class="text-xs font-bold uppercase tracking-wide text-muted">
-              Enables imports for
+              {{ t('admin.plugins.enablesImports') }}
             </p>
             <ul class="mt-2 space-y-1 text-sm font-semibold">
               <li
@@ -366,7 +367,7 @@ function restorePanelFocus(event: Event) {
           <template v-if="setupGroup.provider.credentials.length">
             <ol class="list-decimal space-y-5 pl-5 text-sm leading-6 text-muted marker:font-bold marker:text-attic-500">
               <li>
-                <p>{{ setupGroup.provider.instruction }}</p>
+                <p>{{ setupGroup.provider.instruction ? t(setupGroup.provider.instruction) : '' }}</p>
                 <a
                   :href="setupGroup.provider.url"
                   target="_blank"
@@ -380,7 +381,7 @@ function restorePanelFocus(event: Event) {
                 </a>
               </li>
               <li>
-                Set {{ setupGroup.provider.credentials.length === 1 ? 'this environment variable' : 'these environment variables' }} on your Attic server:
+                {{ t('admin.plugins.setEnv', setupGroup.provider.credentials.length) }}
                 <ul class="mt-3 space-y-2">
                   <li
                     v-for="credential in setupGroup.provider.credentials"
@@ -391,16 +392,16 @@ function restorePanelFocus(event: Event) {
                   </li>
                 </ul>
               </li>
-              <li>Restart Attic, then reload this page.</li>
+              <li>{{ t('admin.plugins.restart') }}</li>
             </ol>
             <p
               v-if="setupGroup.provider.note"
               class="rounded-xl border border-attic-200 bg-attic-50/60 p-4 text-sm leading-6 text-mist-700 dark:border-attic-500/30 dark:bg-attic-500/10 dark:text-mist-200"
             >
-              {{ setupGroup.provider.note }}
+              {{ t(setupGroup.provider.note) }}
             </p>
             <p class="text-xs leading-5 text-muted">
-              Credentials stay on your server. Ask your server administrator to complete setup if you don’t manage the deployment.
+              {{ t('admin.plugins.credentialsNote') }}
             </p>
           </template>
           <div
@@ -412,7 +413,7 @@ function restorePanelFocus(event: Event) {
               :key="source.id"
               class="break-words"
             >
-              {{ source.disabled_reason || 'Contact your server administrator to configure this source.' }}
+              {{ source.disabled_reason || t('admin.plugins.contactAdmin') }}
             </p>
           </div>
         </div>
@@ -424,16 +425,16 @@ function restorePanelFocus(event: Event) {
           class="min-h-11 rounded-lg"
           @click="panelOpen = false"
         >
-          Close
+          {{ t('admin.plugins.close') }}
         </UButton>
         <UButton
           v-if="detailSource?.enabled"
           icon="i-lucide-download"
           class="min-h-11 rounded-lg font-bold"
-          :aria-label="`Import ${detailSource.category_name}`"
+          :aria-label="t('admin.plugins.importName', { name: detailSource.category_name })"
           @click="startImport(detailSource)"
         >
-          Import
+          {{ t('admin.plugins.import') }}
         </UButton>
       </template>
     </USlideover>

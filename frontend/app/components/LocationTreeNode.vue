@@ -7,6 +7,8 @@ interface TreeNode {
   level: number
 }
 
+const { t } = useI18n()
+
 const props = defineProps<{
   node: TreeNode
   selectedId?: string
@@ -46,7 +48,7 @@ const hasChildrenComputed = computed(() => props.node.children.length > 0)
       <!-- Expand/collapse toggle -->
       <button
         v-if="hasChildrenComputed"
-        :aria-label="`${isExpanded ? 'Collapse' : 'Expand'} ${node.location.name}`"
+        :aria-label="t(isExpanded ? 'catalog.locations.treeCollapse' : 'catalog.locations.treeExpand', { name: node.location.name })"
         class="p-0.5 -ml-0.5 rounded hover:bg-mist-200 dark:hover:bg-mist-600 transition-colors"
         @click.stop="emit('toggle', node.location.id)"
       >
@@ -68,7 +70,7 @@ const hasChildrenComputed = computed(() => props.node.children.length > 0)
         role="button"
         tabindex="0"
         :aria-pressed="isSelected"
-        :aria-label="`View ${node.location.name}`"
+        :aria-label="t('catalog.locations.treeView', { name: node.location.name })"
         class="flex min-w-0 flex-1 items-center gap-2 rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-attic-500"
         @click="emit('select', node.location)"
         @keydown.enter.prevent="emit('select', node.location)"
@@ -103,7 +105,7 @@ const hasChildrenComputed = computed(() => props.node.children.length > 0)
       <!-- Add child button (shown on hover) -->
       <button
         class="rounded-lg p-1 opacity-0 transition-all hover:bg-mist-200 focus:opacity-100 group-hover:opacity-100 dark:hover:bg-mist-600"
-        title="Add sub-location"
+        :title="t('catalog.locations.treeAddSub')"
         @click.stop="emit('addChild', node.location.id)"
       >
         <UIcon

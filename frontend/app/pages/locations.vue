@@ -7,6 +7,7 @@ definePageMeta({
 })
 
 const toast = useToast()
+const { t } = useI18n()
 const apiFetch = useApiFetch()
 const savingLocation = ref(false)
 
@@ -16,10 +17,10 @@ const { data: locations, refresh, status } = useApi<Location[]>('/api/locations'
 const selectedLocation = ref<Location | null>(null)
 const searchQuery = ref('')
 const locationTab = ref<'assets' | 'photos'>('assets')
-const locationTabs = [
-  { value: 'assets', label: 'Assets', icon: 'i-lucide-package' },
-  { value: 'photos', label: 'Photos', icon: 'i-lucide-images' }
-] as const
+const locationTabs = computed(() => [
+  { value: 'assets', label: t('catalog.locations.tabAssets'), icon: 'i-lucide-package' },
+  { value: 'photos', label: t('catalog.locations.tabPhotos'), icon: 'i-lucide-images' }
+] as const)
 function navigateLocationTabs(event: KeyboardEvent) {
   if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
   event.preventDefault()
@@ -111,7 +112,7 @@ function openEditModal(location: Location) {
 
 async function saveLocation() {
   if (savingLocation.value) return
-  nameError.value = getLocationNameError(form.name) || ''
+  nameError.value = getLocationNameError(form.name, t) || ''
   if (nameError.value) return
   const wasEditing = !!editingLocation.value
   savingLocation.value = true
@@ -124,9 +125,9 @@ async function saveLocation() {
     selectedLocation.value = location
     modalOpen.value = false
     await refresh()
-    toast.add({ title: wasEditing ? 'Location updated' : 'Location created', color: 'success' })
+    toast.add({ title: wasEditing ? t('catalog.locations.updated') : t('catalog.locations.created'), color: 'success' })
   } catch {
-    toast.add({ title: 'Failed to save location', color: 'error' })
+    toast.add({ title: t('catalog.locations.saveFailed'), color: 'error' })
   } finally {
     savingLocation.value = false
   }
@@ -147,7 +148,7 @@ async function deleteLocation() {
     await apiFetch(`/api/locations/${locationToDelete.value.id}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Location deleted', color: 'success' })
+    toast.add({ title: t('catalog.locations.deleted'), color: 'success' })
     deleteModalOpen.value = false
 
     // Clear selection if deleted location was selected
@@ -158,7 +159,7 @@ async function deleteLocation() {
     locationToDelete.value = null
     refresh()
   } catch {
-    deleteLocationError.value = 'Could not delete this location. Please try again.'
+    deleteLocationError.value = t('catalog.locations.deleteFailed')
   } finally {
     deletingLocation.value = false
   }
@@ -221,7 +222,7 @@ function buildParentOptions(nodes: TreeNode[], excludeIds: Set<string> = new Set
 // Parent options for the select (exclude the currently editing location and its descendants)
 const parentOptions = computed<ParentOption[]>(() => {
   const options: ParentOption[] = [
-    { label: 'None (Top Level)', value: undefined }
+    { label: t('catalog.locations.topLevel'), value: undefined }
   ]
 
   if (!locations.value) return options
@@ -329,11 +330,11 @@ function hasChildren(locationId: string): boolean {
 // Format currency
 const formatRelativeTime = (dateString: string) => {
   const diffDays = Math.floor((Date.now() - new Date(dateString).getTime()) / 86400000)
-  if (diffDays === 0) return 'Today'
-  if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
+  if (diffDays === 0) return t('catalog.locations.today')
+  if (diffDays === 1) return t('catalog.locations.yesterday')
+  if (diffDays < 7) return t('catalog.locations.daysAgo', { count: diffDays })
   const weeks = Math.floor(diffDays / 7)
-  return `${weeks} week${weeks > 1 ? 's' : ''} ago`
+  return t('catalog.locations.weeksAgo', weeks)
 }
 
 const { settings } = useOrganizationSettings()
@@ -365,13 +366,13 @@ function getLocationIcon(location: Location): string {
     <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-          Storage map
+          {{ t('catalog.locations.eyebrow') }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          Locations
+          {{ t('catalog.locations.title') }}
         </h1>
         <p class="mt-1 text-sm text-muted">
-          Browse {{ locations?.length || 0 }} spaces and see what is stored in each one.
+          {{ t('catalog.locations.intro', { count: locations?.length || 0 }) }}
         </p>
       </div>
       <UButton
@@ -379,7 +380,7 @@ function getLocationIcon(location: Location): string {
         class="rounded-xl font-bold shadow-primary"
         @click="openCreateModal()"
       >
-        Add Location
+        {{ t('catalog.locations.add') }}
       </UButton>
     </div>
 
@@ -391,10 +392,10 @@ function getLocationIcon(location: Location): string {
         <div class="flex items-center justify-between border-b border-mist-100 px-4 py-3 dark:border-mist-700">
           <div>
             <h2 class="text-sm font-extrabold text-mist-950 dark:text-white">
-              Hierarchy
+              {{ t('catalog.locations.hierarchy') }}
             </h2>
             <p class="text-[11px] text-muted">
-              Select a space to inspect it
+              {{ t('catalog.locations.hierarchyHint') }}
             </p>
           </div>
           <div class="flex gap-1">
@@ -403,7 +404,7 @@ function getLocationIcon(location: Location): string {
               color="neutral"
               icon="i-lucide-chevrons-up-down"
               size="sm"
-              title="Expand All"
+              :title="t('catalog.locations.expandAll')"
               @click="expandAll"
             />
             <UButton
@@ -411,7 +412,7 @@ function getLocationIcon(location: Location): string {
               color="neutral"
               icon="i-lucide-chevrons-down-up"
               size="sm"
-              title="Collapse All"
+              :title="t('catalog.locations.collapseAll')"
               @click="collapseAll"
             />
             <UButton
@@ -419,7 +420,7 @@ function getLocationIcon(location: Location): string {
               color="neutral"
               icon="i-lucide-plus-square"
               size="sm"
-              title="Add Root Location"
+              :title="t('catalog.locations.addRoot')"
               @click="openCreateModal()"
             />
           </div>
@@ -435,7 +436,7 @@ function getLocationIcon(location: Location): string {
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Filter locations..."
+              :placeholder="t('catalog.locations.filter')"
               class="w-full rounded-xl border border-mist-200 bg-mist-50 py-2 pl-9 pr-4 text-sm text-mist-950 placeholder-mist-400 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 dark:border-mist-700 dark:bg-mist-800 dark:text-white"
             >
           </div>
@@ -466,14 +467,14 @@ function getLocationIcon(location: Location): string {
               />
             </div>
             <p class="text-sm text-muted mb-3">
-              {{ searchQuery ? 'No locations found' : 'No locations yet' }}
+              {{ searchQuery ? t('catalog.locations.noneFound') : t('catalog.locations.noneYet') }}
             </p>
             <UButton
               v-if="!searchQuery"
               size="sm"
               @click="openCreateModal()"
             >
-              Add Location
+              {{ t('catalog.locations.add') }}
             </UButton>
           </div>
 
@@ -509,10 +510,10 @@ function getLocationIcon(location: Location): string {
             />
           </div>
           <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-            Select a Location
+            {{ t('catalog.locations.selectTitle') }}
           </h3>
           <p class="text-sm text-muted max-w-sm">
-            Choose a location from the hierarchy to view its details and assets.
+            {{ t('catalog.locations.selectBody') }}
           </p>
         </div>
 
@@ -550,23 +551,23 @@ function getLocationIcon(location: Location): string {
                 variant="outline"
                 color="neutral"
                 icon="i-lucide-edit"
-                aria-label="Edit location"
+                :aria-label="t('catalog.locations.editAria')"
                 @click="openEditModal(selectedLocation)"
               >
-                <span class="hidden sm:inline">Edit</span>
+                <span class="hidden sm:inline">{{ t('catalog.locations.editShort') }}</span>
               </UButton>
               <UButton
                 icon="i-lucide-plus"
                 :to="`/assets/new?location_id=${selectedLocation.id}`"
               >
-                Add Asset
+                {{ t('catalog.locations.addAsset') }}
               </UButton>
               <UButton
                 variant="ghost"
                 color="error"
                 icon="i-lucide-trash-2"
-                aria-label="Delete location"
-                title="Delete location"
+                :aria-label="t('catalog.locations.deleteAria')"
+                :title="t('catalog.locations.deleteAria')"
                 @click="confirmDelete(selectedLocation)"
               />
             </div>
@@ -601,14 +602,14 @@ function getLocationIcon(location: Location): string {
                       v-else
                       class="text-sm text-white/55"
                     >
-                      No description provided
+                      {{ t('catalog.locations.noDescription') }}
                     </p>
 
                     <!-- Stats Row -->
                     <div class="flex gap-5 pt-2">
                       <div class="shrink-0">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-white/60">
-                          Assets
+                          {{ t('catalog.locations.statAssets') }}
                         </p>
                         <p class="text-2xl font-black text-white">
                           {{ locationAssets?.total || 0 }}
@@ -616,7 +617,7 @@ function getLocationIcon(location: Location): string {
                       </div>
                       <div class="min-w-0 border-l border-white/20 pl-5">
                         <p class="text-[10px] font-bold uppercase tracking-wider text-white/60">
-                          Total value
+                          {{ t('catalog.locations.totalValue') }}
                         </p>
                         <p
                           class="text-2xl font-black text-white"
@@ -624,10 +625,10 @@ function getLocationIcon(location: Location): string {
                           aria-live="polite"
                         >
                           <template v-if="locationStatsStatus === 'pending'">
-                            Loading…
+                            {{ t('catalog.locations.loadingValue') }}
                           </template>
                           <template v-else-if="locationStatsStatus === 'error'">
-                            Unavailable
+                            {{ t('catalog.locations.unavailable') }}
                           </template>
                           <template v-else-if="locationStatsStatus === 'success' && locationStats">
                             {{ formatCurrency(locationStats.total_value) }}
@@ -648,7 +649,7 @@ function getLocationIcon(location: Location): string {
                 >
                   <div class="flex items-center justify-between mb-3">
                     <h3 class="text-xs font-bold uppercase text-muted tracking-wider">
-                      Sub-locations
+                      {{ t('catalog.locations.subLocations') }}
                     </h3>
                     <button
                       class="text-attic-500 hover:text-attic-600 text-xs font-bold flex items-center gap-1 transition-colors"
@@ -658,7 +659,7 @@ function getLocationIcon(location: Location): string {
                         name="i-lucide-plus-circle"
                         class="w-3.5 h-3.5"
                       />
-                      ADD
+                      {{ t('catalog.locations.addUpper') }}
                     </button>
                   </div>
                   <div class="space-y-2 flex-1 overflow-y-auto max-h-[160px] custom-scrollbar">
@@ -689,21 +690,21 @@ function getLocationIcon(location: Location): string {
                     class="w-6 h-6 text-muted mb-2"
                   />
                   <p class="text-xs text-muted mb-2">
-                    No sub-locations yet
+                    {{ t('catalog.locations.noSubLocations') }}
                   </p>
                   <UButton
                     size="xs"
                     variant="soft"
                     @click="openCreateModal(selectedLocation.id)"
                   >
-                    Add Sub-location
+                    {{ t('catalog.locations.addSubLocation') }}
                   </UButton>
                 </div>
               </div>
 
               <div
                 role="tablist"
-                aria-label="Location content"
+                :aria-label="t('catalog.locations.contentLabel')"
                 class="flex gap-6 border-b border-mist-200 dark:border-mist-700"
                 @keydown="navigateLocationTabs"
               >
@@ -751,14 +752,14 @@ function getLocationIcon(location: Location): string {
               >
                 <div class="mb-4 flex items-center justify-between">
                   <h2 class="text-lg font-bold text-mist-950 dark:text-white">
-                    Assets in this location
+                    {{ t('catalog.locations.assetsHere') }}
                   </h2>
                   <NuxtLink
                     v-if="(locationAssets?.total || 0) > 0"
                     :to="`/assets?location_id=${selectedLocation.id}`"
                     class="text-sm font-medium text-attic-500 hover:text-attic-600 hover:underline"
                   >
-                    View All
+                    {{ t('catalog.locations.viewAll') }}
                   </NuxtLink>
                 </div>
 
@@ -789,10 +790,10 @@ function getLocationIcon(location: Location): string {
                       />
                     </div>
                     <h3 class="font-bold text-mist-950 dark:text-white text-sm">
-                      Add Item Here
+                      {{ t('catalog.locations.addItemHere') }}
                     </h3>
                     <p class="text-xs text-muted mt-1">
-                      Place a new asset in {{ selectedLocation.name }}
+                      {{ t('catalog.locations.placeNew', { name: selectedLocation.name }) }}
                     </p>
                   </NuxtLink>
                 </div>
@@ -809,16 +810,16 @@ function getLocationIcon(location: Location): string {
                     />
                   </div>
                   <h3 class="font-bold text-mist-950 dark:text-white text-sm mb-1">
-                    No assets in this location
+                    {{ t('catalog.locations.noAssetsTitle') }}
                   </h3>
                   <p class="text-xs text-muted mb-4">
-                    Start by adding your first asset to {{ selectedLocation.name }}
+                    {{ t('catalog.locations.noAssetsBody', { name: selectedLocation.name }) }}
                   </p>
                   <UButton
                     size="sm"
                     :to="`/assets/new?location_id=${selectedLocation.id}`"
                   >
-                    Add Asset
+                    {{ t('catalog.locations.addAsset') }}
                   </UButton>
                 </div>
               </div>
@@ -831,15 +832,15 @@ function getLocationIcon(location: Location): string {
     <!-- Create/Edit Modal -->
     <UModal
       v-model:open="modalOpen"
-      :title="editingLocation ? 'Edit Location' : 'New Location'"
-      description="Enter the location details and choose how it appears in the location tree."
+      :title="editingLocation ? t('catalog.locations.editTitle') : t('catalog.locations.newTitle')"
+      :description="t('catalog.locations.modalHint')"
       :dismissible="!savingLocation"
     >
       <template #content>
         <div class="flex max-h-[85dvh] flex-col overflow-hidden bg-white dark:bg-mist-800 rounded-xl shadow-xl">
           <div class="shrink-0 p-6 border-b border-mist-100 dark:border-mist-700">
             <h3 class="text-lg font-bold text-mist-950 dark:text-white">
-              {{ editingLocation ? 'Edit Location' : 'New Location' }}
+              {{ editingLocation ? t('catalog.locations.editTitle') : t('catalog.locations.newTitle') }}
             </h3>
           </div>
 
@@ -852,14 +853,14 @@ function getLocationIcon(location: Location): string {
                 for="location-name"
                 class="block text-sm font-medium text-mist-700 dark:text-mist-300 mb-1.5"
               >
-                Name <span class="text-red-500">*</span>
+                {{ t('catalog.shared.name') }} <span class="text-red-500">*</span>
               </label>
               <input
                 id="location-name"
                 v-model="form.name"
                 type="text"
                 required
-                placeholder="Location name"
+                :placeholder="t('catalog.locations.namePlaceholder')"
                 :aria-invalid="!!nameError"
                 :aria-describedby="nameError ? 'location-name-error' : undefined"
                 class="w-full bg-mist-50 dark:bg-mist-700 border border-mist-200 dark:border-mist-600 rounded-lg px-4 py-2.5 text-sm text-mist-950 dark:text-white placeholder-mist-400 focus:ring-2 focus:ring-attic-500 focus:border-transparent"
@@ -875,12 +876,12 @@ function getLocationIcon(location: Location): string {
 
             <div>
               <label class="block text-sm font-medium text-mist-700 dark:text-mist-300 mb-1.5">
-                Description
+                {{ t('catalog.shared.description') }}
               </label>
               <textarea
                 v-model="form.description"
                 rows="3"
-                placeholder="Optional description"
+                :placeholder="t('catalog.locations.descriptionPlaceholder')"
                 class="w-full bg-mist-50 dark:bg-mist-700 border border-mist-200 dark:border-mist-600 rounded-lg px-4 py-2.5 text-sm text-mist-950 dark:text-white placeholder-mist-400 focus:ring-2 focus:ring-attic-500 focus:border-transparent resize-none"
               />
             </div>
@@ -889,7 +890,7 @@ function getLocationIcon(location: Location): string {
 
             <div>
               <label class="block text-sm font-medium text-mist-700 dark:text-mist-300 mb-1.5">
-                Parent Location
+                {{ t('catalog.locations.parent') }}
               </label>
               <select
                 :value="form.parent_id ?? ''"
@@ -914,13 +915,13 @@ function getLocationIcon(location: Location): string {
               :disabled="savingLocation"
               @click="modalOpen = false"
             >
-              Cancel
+              {{ t('catalog.shared.cancel') }}
             </UButton>
             <UButton
               :loading="savingLocation"
               @click="saveLocation"
             >
-              {{ editingLocation ? 'Update' : 'Create' }}
+              {{ editingLocation ? t('catalog.locations.update') : t('catalog.locations.create') }}
             </UButton>
           </div>
         </div>
@@ -930,8 +931,8 @@ function getLocationIcon(location: Location): string {
     <!-- Delete Confirmation Modal -->
     <UModal
       v-model:open="deleteModalOpen"
-      title="Delete location?"
-      :description="`Permanently delete “${locationToDelete?.name || 'this location'}”? This action cannot be undone.`"
+      :title="t('catalog.locations.deleteTitle')"
+      :description="t('catalog.locations.deleteBody', { name: locationToDelete?.name || t('catalog.locations.thisLocation') })"
       :dismissible="!deletingLocation"
       :close="!deletingLocation"
     >
@@ -942,8 +943,8 @@ function getLocationIcon(location: Location): string {
             class="mt-0.5 size-5 shrink-0 text-red-600 dark:text-red-400"
           />
           <div class="space-y-2 text-sm text-mist-700 dark:text-mist-200">
-            <p>All photos in this location will be permanently deleted.</p>
-            <p>Assets will stay in your inventory and will no longer appear under this location.</p>
+            <p>{{ t('catalog.locations.deletePhotosWarning') }}</p>
+            <p>{{ t('catalog.locations.deleteAssetsNote') }}</p>
           </div>
         </div>
         <p
@@ -962,14 +963,14 @@ function getLocationIcon(location: Location): string {
             :disabled="deletingLocation"
             @click="deleteModalOpen = false"
           >
-            Cancel
+            {{ t('catalog.shared.cancel') }}
           </UButton>
           <UButton
             color="error"
             :loading="deletingLocation"
             @click="deleteLocation"
           >
-            Delete location
+            {{ t('catalog.locations.delete') }}
           </UButton>
         </div>
       </template>

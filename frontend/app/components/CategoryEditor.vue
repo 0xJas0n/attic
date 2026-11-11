@@ -13,6 +13,7 @@ const isEditing = computed(() => Boolean(props.category))
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
+const { t } = useI18n()
 const apiFetch = useApiFetch()
 const { features } = useFeatures()
 const { isAdmin } = useAuth()
@@ -77,7 +78,7 @@ const excludedParentIds = computed(() =>
     : undefined
 )
 const parentOptions = computed(() => [
-  { label: 'None (Top Level)', value: undefined },
+  { label: t('catalog.categoryEditor.topLevel'), value: undefined },
   ...buildCategoryOptions(categories.value || [], excludedParentIds.value)
 ])
 const inheritedAttributes = computed(() =>
@@ -177,7 +178,7 @@ const saving = ref(false)
 // Save category
 async function saveCategory() {
   if (!form.name.trim()) {
-    toast.add({ title: 'Please enter a category name', color: 'error' })
+    toast.add({ title: t('catalog.categoryEditor.nameRequired'), color: 'error' })
     return
   }
 
@@ -195,11 +196,11 @@ async function saveCategory() {
     })
 
     clearCategories()
-    toast.add({ title: `Category ${isEditing.value ? 'updated' : 'created'} successfully`, color: 'success' })
+    toast.add({ title: t('catalog.categoryEditor.saved', { action: isEditing.value ? t('catalog.categoryEditor.updatedWord') : t('catalog.categoryEditor.createdWord') }), color: 'success' })
     if (!isEditing.value) categoryDraft.value = null
     router.push('/categories')
   } catch {
-    toast.add({ title: `Failed to ${isEditing.value ? 'update' : 'create'} category`, color: 'error' })
+    toast.add({ title: isEditing.value ? t('catalog.categoryEditor.failedUpdate') : t('catalog.categoryEditor.failedCreate'), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -222,24 +223,24 @@ function cancel() {
             to="/"
             class="hover:text-attic-500 transition-colors"
           >
-            Home
+            {{ t('catalog.shared.home') }}
           </NuxtLink>
           <span class="mx-2 text-mist-300 dark:text-mist-600">/</span>
           <NuxtLink
             to="/categories"
             class="hover:text-attic-500 transition-colors"
           >
-            Categories
+            {{ t('shell.nav.categories') }}
           </NuxtLink>
           <span class="mx-2 text-mist-300 dark:text-mist-600">/</span>
-          <span class="text-mist-950 dark:text-white">{{ isEditing ? 'Edit' : 'New' }}</span>
+          <span class="text-mist-950 dark:text-white">{{ isEditing ? t('catalog.categoryEditor.crumbEdit') : t('catalog.categoryEditor.crumbNew') }}</span>
         </nav>
         <div>
           <h1 class="text-3xl font-extrabold tracking-tight text-mist-950 dark:text-white">
-            {{ isEditing ? `Edit ${category?.name}` : 'Create Category' }}
+            {{ isEditing ? t('catalog.categoryEditor.editTitle', { name: category?.name }) : t('catalog.categoryEditor.createTitle') }}
           </h1>
           <p class="text-muted mt-1">
-            {{ isEditing ? 'Update the structure for this group of assets.' : 'Define the structure for a new group of assets.' }}
+            {{ isEditing ? t('catalog.categoryEditor.editSubtitle') : t('catalog.categoryEditor.createSubtitle') }}
           </p>
         </div>
       </div>
@@ -249,14 +250,14 @@ function cancel() {
           color="neutral"
           @click="cancel"
         >
-          Cancel
+          {{ t('catalog.shared.cancel') }}
         </UButton>
         <UButton
           icon="i-lucide-save"
           :loading="saving"
           @click="saveCategory"
         >
-          {{ isEditing ? 'Save Changes' : 'Save Category' }}
+          {{ isEditing ? t('catalog.categoryEditor.saveChanges') : t('catalog.categoryEditor.saveCategory') }}
         </UButton>
       </div>
     </div>
@@ -276,30 +277,30 @@ function cancel() {
               class="w-5 h-5 text-attic-500"
             />
             <h3 class="text-lg font-bold text-mist-950 dark:text-white">
-              Identity
+              {{ t('catalog.categoryEditor.identity') }}
             </h3>
           </div>
           <div class="space-y-5">
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Category Name
+                {{ t('catalog.categoryEditor.nameLabel') }}
               </label>
               <input
                 v-model="form.name"
                 type="text"
-                placeholder="e.g. Rare Books"
+                :placeholder="t('catalog.categoryEditor.namePlaceholder')"
                 class="w-full px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all placeholder:text-dimmed font-medium text-mist-950 dark:text-white"
               >
             </div>
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Description
+                {{ t('catalog.shared.description') }}
               </label>
               <textarea
                 v-model="form.description"
                 rows="4"
                 maxlength="140"
-                placeholder="What kind of assets belong here?"
+                :placeholder="t('catalog.categoryEditor.descriptionPlaceholder')"
                 class="w-full px-4 py-3 rounded-lg bg-mist-50 dark:bg-mist-900 border border-mist-200 dark:border-mist-600 focus:border-attic-500 focus:ring-1 focus:ring-attic-500 outline-none transition-all placeholder:text-dimmed text-sm resize-none text-mist-950 dark:text-white"
               />
               <div class="flex justify-end mt-1">
@@ -308,7 +309,7 @@ function cancel() {
             </div>
             <div>
               <label class="block text-sm font-semibold text-mist-700 dark:text-mist-300 mb-2">
-                Parent Category
+                {{ t('catalog.categoryEditor.parent') }}
               </label>
               <select
                 :value="form.parent_id ?? ''"
@@ -324,7 +325,7 @@ function cancel() {
                 </option>
               </select>
               <p class="mt-1 text-xs text-muted">
-                This category inherits all fields from its ancestors.
+                {{ t('catalog.categoryEditor.inherits') }}
               </p>
             </div>
           </div>
@@ -338,7 +339,7 @@ function cancel() {
               class="w-5 h-5 text-attic-500"
             />
             <h3 class="text-lg font-bold text-mist-950 dark:text-white">
-              Icon
+              {{ t('catalog.categoryEditor.icon') }}
             </h3>
           </div>
           <IconPicker v-model="form.icon" />
@@ -360,10 +361,10 @@ function cancel() {
               />
               <div>
                 <h3 class="text-lg font-bold text-mist-950 dark:text-white">
-                  Attribute Schema
+                  {{ t('catalog.categoryEditor.schema') }}
                 </h3>
                 <p class="text-xs text-muted">
-                  Construct the data model for your items.
+                  {{ t('catalog.categoryEditor.schemaHint') }}
                 </p>
               </div>
             </div>
@@ -377,7 +378,7 @@ function cancel() {
                 name="i-lucide-plus-circle"
                 class="w-4 h-4"
               />
-              New Attribute
+              {{ t('catalog.categoryEditor.newAttribute') }}
             </button>
           </div>
 
@@ -388,13 +389,13 @@ function cancel() {
               <div class="relative z-10 space-y-3">
                 <div class="flex items-center justify-between mb-4">
                   <h4 class="text-xs font-bold uppercase tracking-wider text-muted">
-                    Active Attributes
+                    {{ t('catalog.categoryEditor.active') }}
                   </h4>
                   <span
                     v-if="selectedAttributes.length > 0"
                     class="text-xs text-muted"
                   >
-                    {{ selectedAttributes.length }} selected
+                    {{ t('catalog.categoryEditor.selected', { count: selectedAttributes.length }) }}
                   </span>
                 </div>
 
@@ -403,7 +404,7 @@ function cancel() {
                   class="mb-5 space-y-2 rounded-xl border border-attic-200 bg-attic-50/60 p-4 dark:border-attic-800 dark:bg-attic-950/20"
                 >
                   <p class="text-xs font-bold uppercase tracking-wider text-attic-600 dark:text-attic-300">
-                    Inherited fields
+                    {{ t('catalog.categoryEditor.inheritedFields') }}
                   </p>
                   <div
                     v-for="assignment in inheritedAttributes"
@@ -411,7 +412,7 @@ function cancel() {
                     class="flex items-center justify-between text-sm"
                   >
                     <span class="font-semibold text-mist-800 dark:text-mist-100">{{ assignment.attribute?.name || getAttribute(assignment.attribute_id)?.name }}</span>
-                    <span class="text-xs text-muted">{{ assignment.required ? 'Required' : 'Optional' }}</span>
+                    <span class="text-xs text-muted">{{ assignment.required ? t('catalog.categoryEditor.required') : t('catalog.categoryEditor.optional') }}</span>
                   </div>
                 </div>
 
@@ -438,7 +439,7 @@ function cancel() {
                   </div>
                   <div class="flex-grow">
                     <p class="font-bold text-sm text-mist-950 dark:text-white">
-                      {{ getAttribute(attr.attribute_id)?.name || 'Unknown' }}
+                      {{ getAttribute(attr.attribute_id)?.name || t('catalog.shared.unknown') }}
                     </p>
                     <p class="text-xs text-muted">
                       {{ getAttribute(attr.attribute_id)?.key || 'unknown_key' }} · {{ getAttribute(attr.attribute_id)?.data_type || 'string' }}
@@ -450,7 +451,7 @@ function cancel() {
                         :for="`required-${attr.attribute_id}`"
                         class="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1"
                       >
-                        Required
+                        {{ t('catalog.categoryEditor.required') }}
                       </label>
                       <label class="relative inline-flex items-center cursor-pointer">
                         <input
@@ -465,7 +466,7 @@ function cancel() {
                     <button
                       type="button"
                       class="text-muted hover:text-red-500 transition-colors p-1"
-                      :aria-label="`Remove ${getAttribute(attr.attribute_id)?.name || 'attribute'}`"
+                      :aria-label="t('catalog.categoryEditor.removeAria', { name: getAttribute(attr.attribute_id)?.name || t('catalog.categoryEditor.attributeFallback') })"
                       @click="removeAttribute(index)"
                     >
                       <UIcon
@@ -485,7 +486,7 @@ function cancel() {
                     name="i-lucide-list-plus"
                     class="w-8 h-8 mb-2 opacity-50"
                   />
-                  <span class="text-sm font-medium">Select attributes from the library</span>
+                  <span class="text-sm font-medium">{{ t('catalog.categoryEditor.selectFromLibrary') }}</span>
                 </div>
 
                 <!-- Add more placeholder when has items -->
@@ -493,7 +494,7 @@ function cancel() {
                   v-else
                   class="h-16 border-2 border-dashed border-mist-200 dark:border-mist-700 rounded-lg flex items-center justify-center text-muted bg-white/30 dark:bg-mist-800/30"
                 >
-                  <span class="text-xs">Select more from the library</span>
+                  <span class="text-xs">{{ t('catalog.categoryEditor.selectMore') }}</span>
                 </div>
               </div>
             </div>
@@ -509,14 +510,14 @@ function cancel() {
                   <input
                     v-model="attributeSearch"
                     type="text"
-                    placeholder="Search attributes..."
+                    :placeholder="t('catalog.categoryEditor.searchAttributes')"
                     class="w-full pl-9 pr-4 py-2 rounded-lg bg-mist-50 dark:bg-mist-900 border-none text-sm focus:ring-1 focus:ring-attic-500 text-mist-950 dark:text-white placeholder-mist-400"
                   >
                 </div>
               </div>
               <div class="p-4 overflow-y-auto max-h-[400px] custom-scrollbar space-y-2">
                 <h5 class="text-xs font-bold text-muted uppercase mb-3">
-                  Available ({{ filteredAttributes.length }})
+                  {{ t('catalog.categoryEditor.available', { count: filteredAttributes.length }) }}
                 </h5>
 
                 <!-- No attributes message -->
@@ -529,13 +530,13 @@ function cancel() {
                     class="w-8 h-8 text-mist-300 mx-auto mb-2"
                   />
                   <p class="text-sm text-muted mb-2">
-                    No attributes created yet
+                    {{ t('catalog.categoryEditor.noAttributes') }}
                   </p>
                   <NuxtLink
                     to="/attributes"
                     class="text-xs text-attic-500 hover:underline font-medium"
                   >
-                    Create attributes first
+                    {{ t('catalog.categoryEditor.createFirst') }}
                   </NuxtLink>
                 </div>
 
@@ -545,7 +546,7 @@ function cancel() {
                   class="text-center py-6"
                 >
                   <p class="text-sm text-muted">
-                    {{ attributeSearch ? 'No matching attributes' : 'All attributes selected' }}
+                    {{ attributeSearch ? t('catalog.categoryEditor.noMatch') : t('catalog.categoryEditor.allSelected') }}
                   </p>
                 </div>
 

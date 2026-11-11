@@ -2,23 +2,24 @@
 import type { TabsItem } from '@nuxt/ui'
 
 definePageMeta({ middleware: 'auth' })
-useHead({ title: 'Profile · Attic' })
+const { t } = useI18n()
+useHead({ title: computed(() => t('misc.profile.pageTitle')) })
 
 const route = useRoute()
 const router = useRouter()
 const { user, isAdmin } = useAuth()
-const tabs = [
-  { label: 'Account', value: 'account', icon: 'i-lucide-user-round', slot: 'account' as const },
-  { label: 'API keys', value: 'api-keys', icon: 'i-lucide-key-round', slot: 'api-keys' as const },
-  { label: 'MCP connection', value: 'mcp', icon: 'i-lucide-plug', slot: 'mcp' as const }
-] satisfies TabsItem[]
+const tabs = computed(() => [
+  { label: t('misc.profile.tabs.account'), value: 'account', icon: 'i-lucide-user-round', slot: 'account' as const },
+  { label: t('misc.profile.tabs.apiKeys'), value: 'api-keys', icon: 'i-lucide-key-round', slot: 'api-keys' as const },
+  { label: t('misc.profile.tabs.mcp'), value: 'mcp', icon: 'i-lucide-plug', slot: 'mcp' as const }
+] satisfies TabsItem[])
 const activeTab = computed({
-  get: () => tabs.some(tab => tab.value === route.query.tab) ? route.query.tab as string : 'account',
+  get: () => tabs.value.some(tab => tab.value === route.query.tab) ? route.query.tab as string : 'account',
   set: (tab: string | number) => {
     void router.push({ path: '/profile', query: { ...route.query, tab: String(tab) } })
   }
 })
-const displayName = computed(() => user.value?.name || user.value?.email || 'Your account')
+const displayName = computed(() => user.value?.name || user.value?.email || t('misc.profile.yourAccount'))
 const initials = computed(() => displayName.value.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase())
 </script>
 
@@ -26,18 +27,18 @@ const initials = computed(() => displayName.value.split(/\s+/).slice(0, 2).map(p
   <div class="mx-auto w-full max-w-5xl space-y-7 pb-8">
     <header>
       <p class="mb-1.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-600 dark:text-attic-300">
-        Your space
+        {{ t('misc.profile.eyebrow') }}
       </p>
       <h1 class="text-3xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white">
-        Profile
+        {{ t('misc.profile.title') }}
       </h1>
       <p class="mt-2 text-sm leading-6 text-muted">
-        Your account, your keys, and the assistants you connect.
+        {{ t('misc.profile.subtitle') }}
       </p>
     </header>
 
     <section
-      aria-label="Your identity"
+      :aria-label="t('misc.profile.identity')"
       class="attic-panel flex min-w-0 items-center gap-4 rounded-2xl p-5 sm:gap-5 sm:p-6"
     >
       <div
@@ -55,7 +56,7 @@ const initials = computed(() => displayName.value.split(/\s+/).slice(0, 2).map(p
             v-if="user?.role"
             class="rounded-full bg-mist-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-mist-600 dark:bg-mist-700 dark:text-mist-200"
           >
-            {{ isAdmin ? 'Administrator' : 'Member' }}
+            {{ isAdmin ? t('misc.profile.administrator') : t('misc.profile.member') }}
           </span>
         </div>
         <p
@@ -65,7 +66,7 @@ const initials = computed(() => displayName.value.split(/\s+/).slice(0, 2).map(p
           {{ user.email }}
         </p>
         <p class="mt-1 text-xs text-muted">
-          Personal settings for your Attic account.
+          {{ t('misc.profile.personalSettings') }}
         </p>
       </div>
     </section>

@@ -5,6 +5,7 @@ const props = defineProps<{ assetId: string, editing?: boolean }>()
 const emit = defineEmits<{ changed: [] }>()
 const added = defineModel<Asset[]>('added', { default: () => [] })
 const removed = defineModel<string[]>('removed', { default: () => [] })
+const { t } = useI18n()
 const apiFetch = useApiFetch()
 const toast = useToast()
 const offset = ref(0)
@@ -34,7 +35,7 @@ async function linkSelected() {
     emit('changed')
   } catch (err: unknown) {
     const failure = err as { data?: { error?: string } }
-    toast.add({ title: failure.data?.error || 'Failed to link asset', color: 'error' })
+    toast.add({ title: failure.data?.error || t('assets.contents.linkFailed'), color: 'error' })
   } finally { busy.value = false }
 }
 
@@ -54,7 +55,7 @@ watch(() => props.assetId, () => {
 <template>
   <section
     class="attic-panel overflow-hidden rounded-[20px] text-default"
-    aria-label="Contents"
+    :aria-label="t('assets.contents.title')"
   >
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-mist-100 bg-mist-50/60 px-5 py-3.5 dark:border-mist-700 dark:bg-mist-800/50">
       <div>
@@ -64,7 +65,7 @@ watch(() => props.assetId, () => {
             class="size-5 text-attic-500"
             aria-hidden="true"
           />
-          Contents
+          {{ t('assets.contents.title') }}
           <span
             v-if="data?.total"
             class="rounded-md bg-mist-100 px-2 py-0.5 text-xs font-medium text-muted dark:bg-mist-800"
@@ -79,7 +80,7 @@ watch(() => props.assetId, () => {
           variant="soft"
           icon="i-lucide-plus"
         >
-          Add asset
+          {{ t('assets.contents.addAsset') }}
         </UButton>
         <UButton
           type="button"
@@ -90,7 +91,7 @@ watch(() => props.assetId, () => {
           :aria-controls="`link-content-${assetId}`"
           @click="pickerOpen = !pickerOpen"
         >
-          Link existing asset
+          {{ t('assets.contents.linkExisting') }}
         </UButton>
       </div>
     </div>
@@ -99,7 +100,7 @@ watch(() => props.assetId, () => {
         v-if="editing"
         class="text-xs text-muted"
       >
-        Contents changes apply when you save this asset.
+        {{ t('assets.contents.changesOnSave') }}
       </p>
       <div
         v-if="pickerOpen"
@@ -108,7 +109,7 @@ watch(() => props.assetId, () => {
       >
         <AssetPicker
           v-model="selected"
-          label="Content asset"
+          :label="t('assets.contents.contentAsset')"
           :exclude-ancestors-of="assetId"
           @resolved="selectedAsset = $event"
         />
@@ -119,7 +120,7 @@ watch(() => props.assetId, () => {
             :loading="busy"
             @click="linkSelected"
           >
-            {{ editing ? 'Stage addition' : 'Link asset' }}
+            {{ editing ? t('assets.contents.stageAddition') : t('assets.contents.linkAsset') }}
           </UButton>
           <UButton
             type="button"
@@ -128,7 +129,7 @@ watch(() => props.assetId, () => {
             :disabled="busy"
             @click="pickerOpen = false; selected = null; selectedAsset = null"
           >
-            Cancel
+            {{ t('assets.contents.cancel') }}
           </UButton>
         </div>
       </div>
@@ -136,26 +137,26 @@ watch(() => props.assetId, () => {
         v-if="error"
         role="alert"
       >
-        Contents could not be loaded. <UButton
+        {{ t('assets.contents.loadError') }} <UButton
           type="button"
           variant="link"
           @click="refresh()"
         >
-          Try again
+          {{ t('common.tryAgain') }}
         </UButton>
       </div>
       <p
         v-else-if="status === 'pending'"
         role="status"
       >
-        Loading contents…
+        {{ t('assets.contents.loading') }}
       </p>
       <template v-else>
         <p
           v-if="!data?.total && !added.length"
           class="text-sm text-muted"
         >
-          No contents yet. Add a new asset or link an existing one.
+          {{ t('assets.contents.empty') }}
         </p>
         <ul class="space-y-2">
           <AssetContentsNode
@@ -172,14 +173,14 @@ watch(() => props.assetId, () => {
             :key="child.id"
             class="flex items-center justify-between gap-3"
           >
-            <span>{{ child.name }} <span class="text-sm text-muted">Will add on save</span></span>
+            <span>{{ child.name }} <span class="text-sm text-muted">{{ t('assets.contents.willAdd') }}</span></span>
             <UButton
               type="button"
               variant="link"
-              :aria-label="`Detach ${child.name}`"
+              :aria-label="t('assets.contents.detachNamed', { name: child.name })"
               @click="remove(child)"
             >
-              Detach
+              {{ t('assets.contents.detach') }}
             </UButton>
           </li>
         </ul>
@@ -193,16 +194,16 @@ watch(() => props.assetId, () => {
             :disabled="offset === 0"
             @click="offset -= 10"
           >
-            Previous contents
+            {{ t('assets.contents.previous') }}
           </UButton>
-          <span class="text-xs text-muted">{{ offset + 1 }}–{{ Math.min(offset + 10, data?.total || 0) }} of {{ data?.total }}</span>
+          <span class="text-xs text-muted">{{ t('assets.contents.range', { from: offset + 1, to: Math.min(offset + 10, data?.total || 0), total: data?.total }) }}</span>
           <UButton
             type="button"
             variant="ghost"
             :disabled="offset + 10 >= (data?.total || 0)"
             @click="offset += 10"
           >
-            Next contents
+            {{ t('assets.contents.next') }}
           </UButton>
         </div>
       </template>

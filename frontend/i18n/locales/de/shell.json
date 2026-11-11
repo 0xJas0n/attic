@@ -1,0 +1,57 @@
+{
+  "shell": {
+    "meta": {
+      "title": "Attic - Hausinventar",
+      "description": "Ein selbst gehostetes Hausinventar für deine Besitztümer, Räume, Garantien, Belege und Sammlungen."
+    },
+    "unknown": "unbekannt",
+    "user": "Benutzer",
+    "tagline": "Hausinventar",
+    "profile": "Profil",
+    "signOut": "Abmelden",
+    "viewProfile": "Profil anzeigen",
+    "savedSearches": "Gespeicherte Suchen",
+    "pinnedSavedSearches": "Angeheftete gespeicherte Suchen",
+    "openAccountMenu": "Kontomenü öffnen",
+    "openNavigation": "Navigation öffnen",
+    "closeNavigation": "Navigation schließen",
+    "addAsset": "Gegenstand hinzufügen",
+    "loadingCurrency": "Währungseinstellungen werden geladen…",
+    "version": "Attic Version {version}",
+    "section": {
+      "home": "Dein Zuhause",
+      "manage": "Verwalten"
+    },
+    "nav": {
+      "dashboard": "Übersicht",
+      "allAssets": "Alle Gegenstände",
+      "locations": "Standorte",
+      "collections": "Sammlungen",
+      "tags": "Tags",
+      "categories": "Kategorien",
+      "attributes": "Attribute",
+      "conditions": "Zustände",
+      "warranties": "Garantien",
+      "importSources": "Importquellen",
+      "users": "Benutzer",
+      "settings": "Einstellungen"
+    },
+    "errors": {
+      "featuresTitle": "Funktionseinstellungen konnten nicht geladen werden",
+      "featuresBody": "Versuche es erneut, bevor du mit deinem Inventar fortfährst.",
+      "currencyTitle": "Währungseinstellungen konnten nicht geladen werden",
+      "currencyBody": "Preise werden ausgeblendet, bis die Währung deiner Organisation verfügbar ist."
+    }
+  },
+  "login": {
+    "failed": "Anmeldung fehlgeschlagen",
+    "tagline": "Dein Hausinventar",
+    "sso": "Mit SSO anmelden",
+    "email": "E-Mail",
+    "emailPlaceholder": "E-Mail-Adresse eingeben",
+    "password": "Passwort",
+    "passwordPlaceholder": "Passwort eingeben",
+    "signIn": "Anmelden",
+    "poweredBy": "Bereitgestellt von Attic"
+  }
+}

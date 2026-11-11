@@ -12,6 +12,7 @@ const emit = defineEmits<{
   'imported': [assetId: string]
 }>()
 
+const { t } = useI18n()
 const toast = useToast()
 const apiFetch = useApiFetch()
 
@@ -25,15 +26,15 @@ const searching = ref(false)
 const importing = ref(false)
 
 const modalTitle = computed(() => {
-  if (step.value === 'select') return 'Choose a source'
-  if (step.value === 'search') return `Search ${selectedPlugin.value?.name || 'catalog'}`
-  return 'Adding to your collection'
+  if (step.value === 'select') return t('misc.import.chooseSource')
+  if (step.value === 'search') return t('misc.import.searchTitle', { name: selectedPlugin.value?.name || t('misc.import.catalog') })
+  return t('misc.import.adding')
 })
 
 const modalDescription = computed(() => {
-  if (step.value === 'select') return 'Select the catalog that best matches the asset you are adding.'
-  if (step.value === 'search') return `Search ${selectedPlugin.value?.name || 'the selected catalog'} for an item to import.`
-  return 'The selected item is being added to your collection.'
+  if (step.value === 'select') return t('misc.import.selectDesc')
+  if (step.value === 'search') return t('misc.import.searchDesc', { name: selectedPlugin.value?.name || t('misc.import.selectedCatalog') })
+  return t('misc.import.addingDesc')
 })
 
 // Load plugins from API
@@ -90,7 +91,7 @@ async function search() {
 
   const query = searchQuery.value.trim()
   if (query.length < 2) {
-    toast.add({ title: 'Please enter at least 2 characters', color: 'warning' })
+    toast.add({ title: t('misc.import.minChars'), color: 'warning' })
     return
   }
 
@@ -111,14 +112,14 @@ async function search() {
     searchResults.value = response.results || []
 
     if (searchResults.value.length === 0) {
-      toast.add({ title: 'No results found', description: 'Try different search terms', color: 'warning' })
+      toast.add({ title: t('misc.import.noResults'), description: t('misc.import.tryDifferent'), color: 'warning' })
     }
   } catch (err: unknown) {
     const error = err as { data?: { error?: string }, message?: string }
-    const message = error?.data?.error || error?.message || 'Search failed'
+    const message = error?.data?.error || error?.message || t('misc.import.searchFailed')
     toast.add({
-      title: 'Search failed',
-      description: message.includes('unavailable') ? 'The search service is temporarily unavailable. Please try again.' : message,
+      title: t('misc.import.searchFailed'),
+      description: message.includes('unavailable') ? t('misc.import.unavailable') : message,
       color: 'error'
     })
   } finally {
@@ -142,8 +143,8 @@ async function importItem(result: PluginSearchResult) {
     )
 
     toast.add({
-      title: 'Import successful',
-      description: `"${response.asset.name}" has been added to your inventory`,
+      title: t('misc.import.success'),
+      description: t('misc.import.successBody', { name: response.asset.name }),
       color: 'success'
     })
 
@@ -151,17 +152,17 @@ async function importItem(result: PluginSearchResult) {
     emit('imported', response.asset.id)
   } catch (err: unknown) {
     const error = err as { data?: { error?: string }, message?: string }
-    const message = error?.data?.error || error?.message || 'Import failed'
+    const message = error?.data?.error || error?.message || t('misc.import.importFailed')
 
-    let description = 'Please try again later'
+    let description = t('misc.import.tryLater')
     if (message.includes('not found')) {
-      description = 'This item is no longer available from the source'
+      description = t('misc.import.notAvailable')
     } else if (message.includes('unavailable')) {
-      description = 'The external service is temporarily unavailable'
+      description = t('misc.import.externalUnavailable')
     }
 
     toast.add({
-      title: 'Import failed',
+      title: t('misc.import.importFailed'),
       description,
       color: 'error'
     })
@@ -198,7 +199,7 @@ function close() {
         </div>
         <div>
           <p class="text-[10px] font-extrabold uppercase tracking-[0.14em] text-attic-500">
-            Catalog import
+            {{ t('misc.import.eyebrow') }}
           </p>
           <DialogTitle
             as="h3"
@@ -247,7 +248,7 @@ function close() {
           v-if="plugins.length === 0"
           class="text-center py-8 text-gray-500"
         >
-          No import plugins available
+          {{ t('misc.import.noPlugins') }}
         </div>
       </div>
 
@@ -263,13 +264,13 @@ function close() {
           <USelectMenu
             v-model="searchField"
             :items="searchFieldOptions"
-            aria-label="Search field"
+            :aria-label="t('misc.import.searchField')"
             class="w-full sm:w-36"
             value-key="value"
           />
           <UInput
             v-model="searchQuery"
-            placeholder="Search..."
+            :placeholder="t('misc.import.searchPlaceholder')"
             class="flex-1"
             size="lg"
             autofocus
@@ -281,7 +282,7 @@ function close() {
             :disabled="!searchQuery.trim()"
             class="rounded-xl font-bold"
           >
-            Search
+            {{ t('misc.import.search') }}
           </UButton>
         </form>
 
@@ -325,7 +326,7 @@ function close() {
               class="rounded-lg font-bold"
               @click="importItem(result)"
             >
-              Import
+              {{ t('misc.import.import') }}
             </UButton>
           </div>
         </div>
@@ -338,7 +339,7 @@ function close() {
             name="i-lucide-search-x"
             class="w-12 h-12 mx-auto mb-2 opacity-50"
           />
-          <p>No results found. Try a different search.</p>
+          <p>{{ t('misc.import.noResultsHint') }}</p>
         </div>
 
         <div
@@ -349,7 +350,7 @@ function close() {
             name="i-lucide-search"
             class="w-12 h-12 mx-auto mb-2 opacity-50"
           />
-          <p>Enter a search term to find items</p>
+          <p>{{ t('misc.import.enterTerm') }}</p>
         </div>
       </div>
 
@@ -363,7 +364,7 @@ function close() {
           class="mb-4 size-12 animate-spin text-attic-500"
         />
         <p class="font-semibold text-muted">
-          Importing item…
+          {{ t('misc.import.importing') }}
         </p>
       </div>
     </template>
@@ -376,7 +377,7 @@ function close() {
           class="rounded-xl"
           @click="close"
         >
-          Cancel
+          {{ t('misc.import.cancel') }}
         </UButton>
       </div>
     </template>

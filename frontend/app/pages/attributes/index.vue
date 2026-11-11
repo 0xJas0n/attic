@@ -6,6 +6,7 @@ definePageMeta({
 })
 
 const toast = useToast()
+const { t } = useI18n()
 
 const { data: attributes, refresh, status } = useApi<Attribute[]>('/api/attributes')
 
@@ -13,16 +14,16 @@ const { data: attributes, refresh, status } = useApi<Attribute[]>('/api/attribut
 const searchQuery = ref('')
 const selectedType = ref('all')
 
-const dataTypes = [
-  { value: 'all', label: 'All fields', icon: 'i-lucide-layers-3' },
-  { value: 'url', label: 'URL', icon: 'i-lucide-link' },
-  { value: 'date', label: 'Date', icon: 'i-lucide-calendar' },
-  { value: 'text', label: 'Long text', icon: 'i-lucide-align-left' },
-  { value: 'number', label: 'Number', icon: 'i-lucide-hash' },
-  { value: 'select', label: 'Select', icon: 'i-lucide-list-filter' },
-  { value: 'string', label: 'Short text', icon: 'i-lucide-type' },
-  { value: 'boolean', label: 'Yes / No', icon: 'i-lucide-toggle-left' }
-]
+const dataTypes = computed(() => [
+  { value: 'all', label: t('catalog.dataTypes.all'), icon: 'i-lucide-layers-3' },
+  { value: 'url', label: t('catalog.dataTypes.url'), icon: 'i-lucide-link' },
+  { value: 'date', label: t('catalog.dataTypes.date'), icon: 'i-lucide-calendar' },
+  { value: 'text', label: t('catalog.dataTypes.text'), icon: 'i-lucide-align-left' },
+  { value: 'number', label: t('catalog.dataTypes.number'), icon: 'i-lucide-hash' },
+  { value: 'select', label: t('catalog.dataTypes.select'), icon: 'i-lucide-list-filter' },
+  { value: 'string', label: t('catalog.dataTypes.string'), icon: 'i-lucide-type' },
+  { value: 'boolean', label: t('catalog.dataTypes.booleanChip'), icon: 'i-lucide-toggle-left' }
+])
 
 // Pagination
 const currentPage = ref(1)
@@ -85,7 +86,7 @@ const { isAdmin } = useAuth()
 const impactModal = useTemplateRef('impactModal')
 function confirmDelete(attribute: Attribute) {
   impactModal.value?.run({ attributeId: attribute.id, action: 'delete_attribute' }, async () => {
-    toast.add({ title: 'Attribute deleted', color: 'success' })
+    toast.add({ title: t('catalog.attributes.deleted'), color: 'success' })
     await refresh()
   })
 }
@@ -100,7 +101,7 @@ function getTypeStyle(type: string): { icon: string, bgColor: string, textColor:
         bgColor: 'bg-slate-100 dark:bg-slate-800',
         textColor: 'text-slate-700 dark:text-slate-300',
         borderColor: 'border-slate-200 dark:border-slate-700',
-        label: type === 'url' ? 'URL' : 'Short text'
+        label: type === 'url' ? t('catalog.dataTypes.url') : t('catalog.dataTypes.string')
       }
     case 'text':
       return {
@@ -108,7 +109,7 @@ function getTypeStyle(type: string): { icon: string, bgColor: string, textColor:
         bgColor: 'bg-indigo-50 dark:bg-indigo-900/30',
         textColor: 'text-indigo-700 dark:text-indigo-300',
         borderColor: 'border-indigo-100 dark:border-indigo-900/50',
-        label: 'Long text'
+        label: t('catalog.dataTypes.text')
       }
     case 'number':
       return {
@@ -116,7 +117,7 @@ function getTypeStyle(type: string): { icon: string, bgColor: string, textColor:
         bgColor: 'bg-orange-50 dark:bg-orange-900/30',
         textColor: 'text-orange-700 dark:text-orange-300',
         borderColor: 'border-orange-100 dark:border-orange-900/50',
-        label: 'Number'
+        label: t('catalog.dataTypes.number')
       }
     case 'boolean':
       return {
@@ -124,7 +125,7 @@ function getTypeStyle(type: string): { icon: string, bgColor: string, textColor:
         bgColor: 'bg-green-50 dark:bg-green-900/30',
         textColor: 'text-green-700 dark:text-green-300',
         borderColor: 'border-green-100 dark:border-green-900/50',
-        label: 'Boolean'
+        label: t('catalog.dataTypes.boolean')
       }
     case 'date':
       return {
@@ -132,7 +133,7 @@ function getTypeStyle(type: string): { icon: string, bgColor: string, textColor:
         bgColor: 'bg-purple-50 dark:bg-purple-900/30',
         textColor: 'text-purple-700 dark:text-purple-300',
         borderColor: 'border-purple-100 dark:border-purple-900/50',
-        label: 'Date'
+        label: t('catalog.dataTypes.date')
       }
     case 'select':
       return {
@@ -140,7 +141,7 @@ function getTypeStyle(type: string): { icon: string, bgColor: string, textColor:
         bgColor: 'bg-cyan-50 dark:bg-cyan-900/30',
         textColor: 'text-cyan-700 dark:text-cyan-300',
         borderColor: 'border-cyan-100 dark:border-cyan-900/50',
-        label: 'Select'
+        label: t('catalog.dataTypes.select')
       }
     default:
       return {
@@ -191,13 +192,13 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-          Schema library
+          {{ t('catalog.attributes.eyebrow') }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          Fields
+          {{ t('catalog.attributes.title') }}
         </h1>
         <p class="mt-1 max-w-2xl text-sm text-muted">
-          Reusable details that categories can add to their asset forms.
+          {{ t('catalog.attributes.intro') }}
         </p>
       </div>
       <UButton
@@ -206,7 +207,7 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
         icon="i-lucide-plus"
         class="rounded-xl font-bold shadow-primary"
       >
-        New field
+        {{ t('catalog.attributes.new') }}
       </UButton>
     </header>
 
@@ -240,7 +241,7 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
         <UInput
           v-model="searchQuery"
           icon="i-lucide-search"
-          placeholder="Search name or key"
+          :placeholder="t('catalog.attributes.searchPlaceholder')"
           class="w-full shrink-0 2xl:w-64"
           size="lg"
         />
@@ -252,14 +253,14 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
       <div class="flex items-center justify-between border-b border-mist-100 px-4 py-4 dark:border-mist-700 sm:px-5">
         <div>
           <h2 class="font-extrabold text-mist-950 dark:text-white">
-            Field library
+            {{ t('catalog.attributes.library') }}
           </h2>
           <p class="text-xs text-muted">
-            Names are for people; keys are used to store the data.
+            {{ t('catalog.attributes.libraryHint') }}
           </p>
         </div>
         <span class="rounded-lg bg-mist-50 px-2.5 py-1 text-xs font-bold text-muted dark:bg-mist-700/60">
-          {{ filteredAttributes.length }} shown
+          {{ t('catalog.attributes.shown', { count: filteredAttributes.length }) }}
         </span>
       </div>
       <!-- Loading State -->
@@ -285,16 +286,16 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
           />
         </div>
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No fields yet
+          {{ t('catalog.attributes.emptyTitle') }}
         </h3>
         <p class="text-sm text-muted mb-4 max-w-sm">
-          Create your first reusable field, then add it to one or more categories.
+          {{ t('catalog.attributes.emptyBody') }}
         </p>
         <UButton
           v-if="isAdmin"
           to="/attributes/new"
         >
-          Create field
+          {{ t('catalog.attributes.create') }}
         </UButton>
       </div>
 
@@ -308,17 +309,17 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
           class="w-12 h-12 text-mist-300 mb-4"
         />
         <h3 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-          No results found
+          {{ t('catalog.attributes.noResults') }}
         </h3>
         <p class="text-sm text-muted">
-          No fields match these filters.
+          {{ t('catalog.attributes.noResultsBody') }}
         </p>
         <button
           type="button"
           class="mt-2 text-sm font-semibold text-attic-500 hover:text-attic-600"
           @click="searchQuery = ''; selectedType = 'all'"
         >
-          Clear filters
+          {{ t('catalog.attributes.clearFilters') }}
         </button>
       </div>
 
@@ -370,13 +371,13 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
                 size="sm"
                 icon="i-lucide-pencil"
               >
-                Edit
+                {{ t('catalog.attributes.edit') }}
               </UButton>
               <button
                 v-if="isAdmin && !attr.plugin_id"
                 type="button"
                 class="flex size-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                :aria-label="`Delete ${attr.name}`"
+                :aria-label="t('catalog.attributes.deleteAria', { name: attr.name })"
                 @click="confirmDelete(attr)"
               >
                 <UIcon
@@ -391,9 +392,9 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
         <!-- Footer with Pagination -->
         <div class="flex flex-col gap-3 border-t border-mist-100 bg-mist-50/50 px-4 py-3 dark:border-mist-700 dark:bg-mist-700/20 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <p class="text-xs text-muted">
-            Showing {{ (currentPage - 1) * itemsPerPage + 1 }}–{{ Math.min(currentPage * itemsPerPage, filteredAttributes.length) }} of {{ filteredAttributes.length }} fields
+            {{ t('catalog.attributes.showing', { from: (currentPage - 1) * itemsPerPage + 1, to: Math.min(currentPage * itemsPerPage, filteredAttributes.length), total: filteredAttributes.length }) }}
             <span v-if="searchQuery && attributes?.length !== filteredAttributes.length">
-              (filtered from {{ attributes?.length || 0 }})
+              {{ t('catalog.attributes.filteredFrom', { total: attributes?.length || 0 }) }}
             </span>
           </p>
           <div
@@ -405,17 +406,17 @@ function getAttributeIcon(attr: Attribute): { icon: string, bgColor: string, tex
               :disabled="currentPage === 1"
               @click="prevPage"
             >
-              Prev
+              {{ t('catalog.attributes.prev') }}
             </button>
             <span class="text-xs text-muted px-2">
-              Page {{ currentPage }} of {{ totalPages }}
+              {{ t('catalog.attributes.page', { page: currentPage, pages: totalPages }) }}
             </span>
             <button
               class="px-3 py-1.5 text-xs font-medium border border-mist-200 dark:border-mist-600 rounded-lg hover:bg-mist-100 dark:hover:bg-mist-700 text-mist-600 dark:text-mist-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               :disabled="currentPage === totalPages"
               @click="nextPage"
             >
-              Next
+              {{ t('catalog.attributes.next') }}
             </button>
           </div>
         </div>

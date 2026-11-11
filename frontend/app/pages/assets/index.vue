@@ -11,6 +11,7 @@ definePageMeta({
 
 const router = useRouter()
 const route = useRoute()
+const { t } = useI18n()
 const { features } = useFeatures()
 const importModalOpen = ref(false)
 const searchContainer = ref<HTMLElement | null>(null)
@@ -51,19 +52,19 @@ const savedSearchActions = computed(() => {
   if (!selected.value) return []
   const name = selected.value.name
   return [
-    [{ label: `Saved search: ${name}`, type: 'label' as const }],
+    [{ label: t('assets.index.savedSearchNamed', { name }), type: 'label' as const }],
     [{
-      label: selected.value.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
+      label: selected.value.pinned ? t('assets.index.unpin') : t('assets.index.pin'),
       icon: selected.value.pinned ? 'i-lucide-pin-off' : 'i-lucide-pin',
       onSelect: () => togglePin()
     }],
     [{
-      label: `Edit “${name}”`,
+      label: t('assets.index.editNamed', { name }),
       icon: 'i-lucide-sliders-horizontal',
       onSelect: () => openAdvanced('edit')
     }],
     [{
-      label: `Rename “${name}”`,
+      label: t('assets.index.renameNamed', { name }),
       icon: 'i-lucide-pencil',
       onSelect: () => {
         renameName.value = name
@@ -71,7 +72,7 @@ const savedSearchActions = computed(() => {
       }
     }],
     [{
-      label: `Delete “${name}”`,
+      label: t('assets.index.deleteNamed', { name }),
       icon: 'i-lucide-trash-2',
       color: 'error' as const,
       onSelect: () => { deleteOpen.value = true }
@@ -156,7 +157,7 @@ const advancedOptions = computed(() => ({
 
 const categoryOptions = computed(() =>
   [
-    { label: 'Uncategorized', value: uncategorizedCategoryFilter },
+    { label: t('assets.index.uncategorized'), value: uncategorizedCategoryFilter },
     ...buildCategoryOptions(categories.value || [])
   ]
 )
@@ -216,24 +217,24 @@ const activeFilterChips = computed<{ key: ActiveFilterKey, label: string }[]>(()
     return item?.name || item?.label || id
   }
 
-  if (filters.collection_id) chips.push({ key: 'collection_id', label: `Collection: ${optionName(collections.value, filters.collection_id)}` })
+  if (filters.collection_id) chips.push({ key: 'collection_id', label: t('assets.index.chip.collection', { name: optionName(collections.value, filters.collection_id) }) })
   if (filters.category_id) {
     const label = filters.category_id === uncategorizedCategoryFilter
-      ? 'Uncategorized'
+      ? t('assets.index.uncategorized')
       : optionName(categories.value, filters.category_id)
-    chips.push({ key: 'category_id', label: `Category: ${label}` })
+    chips.push({ key: 'category_id', label: t('assets.index.chip.category', { name: label }) })
   }
-  if (filters.location_id) chips.push({ key: 'location_id', label: `Location: ${optionName(locations.value, filters.location_id)}` })
-  if (filters.condition_id) chips.push({ key: 'condition_id', label: `Condition: ${optionName(conditions.value, filters.condition_id)}` })
+  if (filters.location_id) chips.push({ key: 'location_id', label: t('assets.index.chip.location', { name: optionName(locations.value, filters.location_id) }) })
+  if (filters.condition_id) chips.push({ key: 'condition_id', label: t('assets.index.chip.condition', { name: optionName(conditions.value, filters.condition_id) }) })
   if (features.value.tags && filters.tag_ids?.length) {
     const names = filters.tag_ids.map(id => optionName(tags.value, id)).join(', ')
-    chips.push({ key: 'tag_ids', label: `Tags (${filters.tag_match || 'any'}): ${names}` })
+    chips.push({ key: 'tag_ids', label: t('assets.index.chip.tags', { match: filters.tag_match === 'all' ? t('assets.index.matchAllShort') : t('assets.index.matchAnyShort'), names }) })
   }
   if (filters.attribute_q) {
     const attribute = selectableAttributes.value.find(item => item.options?.some(option => option.label === filters.attribute_q))
-    chips.push({ key: 'attribute_q', label: `${attribute?.name || 'Attribute'}: ${filters.attribute_q}` })
+    chips.push({ key: 'attribute_q', label: t('assets.index.chip.attribute', { name: attribute?.name || t('assets.index.attribute'), value: filters.attribute_q }) })
   }
-  if (expression.value) chips.push({ key: 'expression', label: 'Advanced rules' })
+  if (expression.value) chips.push({ key: 'expression', label: t('assets.index.chip.advancedRules') })
   return chips
 })
 
@@ -353,13 +354,13 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <p class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-attic-500">
-          Inventory
+          {{ t('assets.index.eyebrow') }}
         </p>
         <h1 class="text-2xl font-extrabold tracking-[-0.04em] text-mist-950 dark:text-white md:text-3xl">
-          All Assets
+          {{ t('assets.index.title') }}
         </h1>
         <p class="text-sm text-muted">
-          Manage and track everything you keep and care for.
+          {{ t('assets.index.subtitle') }}
         </p>
       </div>
       <div class="flex items-center gap-2">
@@ -371,14 +372,14 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
           icon="i-lucide-puzzle"
           @click="importModalOpen = true"
         >
-          Import
+          {{ t('assets.index.import') }}
         </UButton>
         <UButton
           to="/assets/new"
           class="rounded-xl font-bold shadow-primary"
           icon="i-lucide-plus"
         >
-          Add Asset
+          {{ t('assets.index.addAsset') }}
         </UButton>
       </div>
     </header>
@@ -392,8 +393,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
         >
           <UInput
             v-model="searchQuery"
-            placeholder="Search assets..."
-            aria-label="Quick search"
+            :placeholder="t('assets.index.searchPlaceholder')"
+            :aria-label="t('assets.index.quickSearch')"
             :title="quickSearchDescription(features)"
             icon="i-lucide-search"
             size="lg"
@@ -408,8 +409,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             :model-value="selectedId"
             :items="(savedFilters || []).map(f => ({ label: f.name, value: f.id }))"
             value-key="value"
-            placeholder="Saved searches"
-            aria-label="Saved searches"
+            :placeholder="t('assets.index.savedSearches')"
+            :aria-label="t('assets.index.savedSearches')"
             icon="i-lucide-bookmark"
             class="min-w-0 flex-1 2xl:w-64"
             :disabled="busy || savedLoading"
@@ -418,7 +419,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
           <span
             v-if="selected && modified"
             class="self-center rounded-md bg-warning/10 px-2 py-1 text-xs font-semibold text-warning"
-          >Modified</span>
+          >{{ t('assets.index.modified') }}</span>
           <UDropdownMenu
             v-if="selected"
             :items="savedSearchActions"
@@ -428,11 +429,11 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
               icon="i-lucide-ellipsis"
               color="neutral"
               variant="outline"
-              :aria-label="`Manage saved search ${selected.name}`"
-              :title="`Manage saved search ${selected.name}`"
+              :aria-label="t('assets.index.manageSaved', { name: selected.name })"
+              :title="t('assets.index.manageSaved', { name: selected.name })"
               :disabled="busy"
             >
-              <span class="hidden 2xl:inline">Manage</span>
+              <span class="hidden 2xl:inline">{{ t('assets.index.manage') }}</span>
             </UButton>
           </UDropdownMenu>
         </div>
@@ -444,10 +445,10 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
           :trailing-icon="filtersOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
           :aria-expanded="filtersOpen"
           aria-controls="asset-filters"
-          aria-label="Filters"
+          :aria-label="t('assets.index.filters')"
           @click="filtersOpen = !filtersOpen"
         >
-          Filters
+          {{ t('assets.index.filters') }}
           <span
             v-if="activeFilterChips.length"
             aria-hidden="true"
@@ -458,7 +459,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
       <div
         v-if="activeFilterChips.length || hasActiveFilters"
         class="mt-3 flex flex-wrap items-center gap-2 border-t border-mist-100 pt-3 dark:border-mist-700"
-        aria-label="Active filters"
+        :aria-label="t('assets.index.activeFilters')"
       >
         <UButton
           v-for="chip in activeFilterChips"
@@ -467,7 +468,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
           color="neutral"
           variant="soft"
           trailing-icon="i-lucide-x"
-          :aria-label="`Remove ${chip.label} filter`"
+          :aria-label="t('assets.index.removeFilter', { label: chip.label })"
           @click="removeActiveFilter(chip.key)"
         >
           {{ chip.label }}
@@ -479,22 +480,22 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
           color="neutral"
           @click="clearFilters"
         >
-          Clear all
+          {{ t('assets.index.clearAll') }}
         </UButton>
       </div>
       <div
         v-if="filtersOpen"
         id="asset-filters"
         class="mt-4 border-t border-mist-100 pt-4 dark:border-mist-700"
-        aria-label="Filters"
+        :aria-label="t('assets.index.filters')"
       >
         <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 class="text-sm font-extrabold text-mist-950 dark:text-white">
-              Filters
+              {{ t('assets.index.filters') }}
             </h2>
             <p class="text-xs text-muted">
-              Narrow the asset list, or combine detailed rules in the search builder.
+              {{ t('assets.index.filtersHint') }}
             </p>
           </div>
           <UButton
@@ -504,7 +505,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             :disabled="savedLoading"
             @click="openAdvanced()"
           >
-            Open search builder
+            {{ t('assets.index.openBuilder') }}
           </UButton>
         </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
@@ -513,8 +514,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             v-model="filters.collection_id"
             :items="collectionOptions"
             value-key="value"
-            placeholder="Collection"
-            aria-label="Filter by collection"
+            :placeholder="t('assets.index.collection')"
+            :aria-label="t('assets.index.filterByCollection')"
             class="min-w-0"
           />
           <USelectMenu
@@ -523,25 +524,25 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             :items="tagOptions"
             multiple
             value-key="value"
-            placeholder="Tags"
-            aria-label="Filter by tags"
+            :placeholder="t('assets.index.tags')"
+            :aria-label="t('assets.index.filterByTags')"
             class="min-w-0"
             icon="i-lucide-tags"
           />
           <USelect
             v-if="features.tags && (filters.tag_ids?.length || 0) > 1"
             v-model="filters.tag_match"
-            :items="[{ label: 'Match any tag', value: 'any' }, { label: 'Match all tags', value: 'all' }]"
+            :items="[{ label: t('assets.index.matchAnyTag'), value: 'any' }, { label: t('assets.index.matchAllTags'), value: 'all' }]"
             value-key="value"
-            aria-label="Tag matching"
+            :aria-label="t('assets.index.tagMatching')"
             class="min-w-0"
           />
           <USelectMenu
             v-if="features.categories"
             v-model="filters.category_id"
             :items="categoryOptions"
-            placeholder="Category"
-            aria-label="Filter by category"
+            :placeholder="t('assets.index.category')"
+            :aria-label="t('assets.index.filterByCategory')"
             class="min-w-0"
             value-key="value"
             icon="i-lucide-folder"
@@ -550,8 +551,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             v-if="features.locations"
             v-model="filters.location_id"
             :items="locationOptions"
-            placeholder="Location"
-            aria-label="Filter by location"
+            :placeholder="t('assets.index.location')"
+            :aria-label="t('assets.index.filterByLocation')"
             class="min-w-0"
             value-key="value"
             icon="i-lucide-map-pin"
@@ -560,8 +561,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             v-if="features.conditions"
             v-model="filters.condition_id"
             :items="conditionOptions"
-            placeholder="Condition"
-            aria-label="Filter by condition"
+            :placeholder="t('assets.index.condition')"
+            :aria-label="t('assets.index.filterByCondition')"
             class="min-w-0"
             value-key="value"
             icon="i-lucide-sparkles"
@@ -572,8 +573,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             :model-value="selectedAttributeId"
             :items="attributeOptions"
             value-key="value"
-            placeholder="Attribute"
-            aria-label="Attribute"
+            :placeholder="t('assets.index.attribute')"
+            :aria-label="t('assets.index.attribute')"
             class="min-w-0"
             @update:model-value="selectAttribute"
           />
@@ -584,8 +585,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             :model-value="selectedAttributeValue"
             :items="attributeValueOptions"
             value-key="value"
-            :placeholder="selectedAttributeId ? 'Attribute value' : 'Choose an attribute first'"
-            aria-label="Attribute value"
+            :placeholder="selectedAttributeId ? t('assets.index.attributeValue') : t('assets.index.chooseAttributeFirst')"
+            :aria-label="t('assets.index.attributeValue')"
             icon="i-lucide-search"
             class="min-w-0"
             :disabled="!selectedAttributeId"
@@ -596,7 +597,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
           v-if="features.attributes && !selectableAttributes.length && !attributesError"
           class="mt-2 text-xs text-muted"
         >
-          No configured attribute values are available. Use the search builder for text, number, date, or boolean attributes.
+          {{ t('assets.index.noAttributeValues') }}
         </p>
       </div>
       <p
@@ -609,7 +610,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
       <ul
         v-if="issues.length"
         class="mt-3 text-sm text-error"
-        aria-label="Saved filter issues"
+        :aria-label="t('assets.index.savedFilterIssues')"
       >
         <li
           v-for="(issue, index) in issues"
@@ -623,12 +624,12 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
         class="mt-3 text-sm text-error"
         role="alert"
       >
-        Could not load saved filters. <UButton
+        {{ t('assets.index.savedLoadError') }} <UButton
           size="xs"
           variant="link"
           @click="refreshSaved()"
         >
-          Retry saved filters
+          {{ t('assets.index.retrySaved') }}
         </UButton>
       </p>
       <p
@@ -636,12 +637,12 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
         class="mt-3 text-sm text-error"
         role="alert"
       >
-        Could not load attribute definitions. <UButton
+        {{ t('assets.index.attributesLoadError') }} <UButton
           size="xs"
           variant="link"
           @click="refreshAttributes()"
         >
-          Retry attributes
+          {{ t('assets.index.retryAttributes') }}
         </UButton>
       </p>
     </section>
@@ -661,15 +662,15 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
     />
     <UModal
       v-model:open="renameOpen"
-      title="Rename saved search"
-      description="Only the name will change, including for searches that need repair."
+      :title="t('assets.index.renameTitle')"
+      :description="t('assets.index.renameDescription')"
       :dismissible="!busy"
       :close="!busy"
     >
       <template #body>
         <UInput
           v-model="renameName"
-          aria-label="New filter name"
+          :aria-label="t('assets.index.newFilterName')"
           class="w-full"
         />
         <p
@@ -687,21 +688,21 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
           :disabled="busy"
           @click="renameOpen = false"
         >
-          Cancel
+          {{ t('assets.index.cancel') }}
         </UButton>
         <UButton
           :loading="busy"
           :disabled="!renameName.trim()"
           @click="rename(renameName).then(ok => { if (ok) renameOpen = false })"
         >
-          Rename
+          {{ t('assets.index.rename') }}
         </UButton>
       </template>
     </UModal>
     <UModal
       v-model:open="deleteOpen"
-      title="Delete saved search"
-      :description="`Delete ${selected?.name || 'this filter'}? Your current search will stay applied.`"
+      :title="t('assets.index.deleteTitle')"
+      :description="t('assets.index.deleteDescription', { name: selected?.name || t('assets.index.thisFilter') })"
       :dismissible="!busy"
       :close="!busy"
     >
@@ -712,14 +713,14 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
           :disabled="busy"
           @click="deleteOpen = false"
         >
-          Cancel
+          {{ t('assets.index.cancel') }}
         </UButton>
         <UButton
           color="error"
           :loading="busy"
           @click="remove().then(ok => { if (ok) deleteOpen = false })"
         >
-          Delete
+          {{ t('assets.index.delete') }}
         </UButton>
       </template>
     </UModal>
@@ -730,14 +731,14 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
         <div class="flex items-center justify-between border-b border-mist-100 px-4 py-4 dark:border-mist-700 sm:px-5">
           <div>
             <h2 class="font-extrabold text-mist-950 dark:text-white">
-              Asset inventory
+              {{ t('assets.index.inventory') }}
             </h2>
             <p class="text-xs text-muted">
-              Browse, filter, and manage every item in your collection.
+              {{ t('assets.index.inventoryHint') }}
             </p>
           </div>
           <span class="rounded-lg bg-mist-50 px-2.5 py-1 text-xs font-bold text-muted dark:bg-mist-700/60">
-            {{ assetsResponse?.total || 0 }} shown
+            {{ t('assets.index.shown', { count: assetsResponse?.total || 0 }) }}
           </span>
         </div>
         <div class="overflow-x-auto">
@@ -745,34 +746,34 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
             <thead>
               <tr class="border-b border-mist-200/80 bg-mist-50/70 dark:border-mist-700 dark:bg-mist-800/80">
                 <th class="w-16 p-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">
-                  Item
+                  {{ t('assets.index.colItem') }}
                 </th>
                 <th class="p-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">
-                  Asset
+                  {{ t('assets.index.colAsset') }}
                 </th>
                 <th
                   v-if="features.categories"
                   class="hidden p-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted md:table-cell"
                 >
-                  Category
+                  {{ t('assets.index.colCategory') }}
                 </th>
                 <th
                   v-if="features.collections"
                   class="hidden p-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted md:table-cell"
                 >
-                  Collections
+                  {{ t('assets.index.colCollections') }}
                 </th>
                 <th
                   v-if="features.locations"
                   class="hidden p-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted lg:table-cell"
                 >
-                  Location
+                  {{ t('assets.index.colLocation') }}
                 </th>
                 <th class="hidden p-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted xl:table-cell">
                   ID
                 </th>
                 <th class="w-16 p-3 text-right text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">
-                  <span class="sr-only">Actions</span>
+                  <span class="sr-only">{{ t('assets.index.colActions') }}</span>
                 </th>
               </tr>
             </thead>
@@ -788,7 +789,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                       name="i-lucide-loader-2"
                       class="w-5 h-5 animate-spin"
                     />
-                    <span>Loading assets...</span>
+                    <span>{{ t('assets.index.loading') }}</span>
                   </div>
                 </td>
               </tr>
@@ -805,10 +806,10 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                       class="mb-3 size-10 text-red-400"
                     />
                     <p class="font-bold text-mist-950 dark:text-white">
-                      Could not load assets
+                      {{ t('assets.index.loadError') }}
                     </p>
                     <p class="mt-1 text-sm text-muted">
-                      {{ queryFailure?.message || message || 'Open the search builder to remove or repair unavailable criteria.' }}
+                      {{ queryFailure?.message || message || t('assets.index.repairHint') }}
                     </p>
                     <ul
                       v-if="queryFailure?.issues.length"
@@ -828,7 +829,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                       icon="i-lucide-refresh-cw"
                       @click="refresh()"
                     >
-                      Try again
+                      {{ t('common.tryAgain') }}
                     </UButton>
                   </div>
                 </td>
@@ -845,21 +846,21 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                     class="w-12 h-12 mx-auto mb-4 text-gray-300"
                   />
                   <p class="text-gray-500 mb-4">
-                    {{ hasActiveFilters ? 'No assets match these filters' : 'No assets yet' }}
+                    {{ hasActiveFilters ? t('assets.index.noMatches') : t('assets.index.noAssets') }}
                   </p>
                   <UButton
                     v-if="hasActiveFilters"
                     variant="soft"
                     @click="clearFilters"
                   >
-                    Clear filters
+                    {{ t('assets.index.clearFilters') }}
                   </UButton>
                   <UButton
                     v-else
                     to="/assets/new"
                     variant="soft"
                   >
-                    Add your first asset
+                    {{ t('assets.index.addFirst') }}
                   </UButton>
                 </td>
               </tr>
@@ -894,13 +895,13 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                     {{ asset.name }}
                   </NuxtLink>
                   <p class="mt-0.5 truncate text-xs text-muted">
-                    {{ asset.description || `${asset.quantity} ${asset.quantity === 1 ? 'item' : 'items'} in inventory` }}
+                    {{ asset.description || t('assets.index.itemsInInventory', { count: asset.quantity }, asset.quantity) }}
                   </p>
                   <NuxtLink
                     v-if="asset.parent"
                     :to="`/assets/${asset.parent.id}`"
                     class="text-xs text-attic-500 hover:underline"
-                  >Inside: {{ asset.parent.name }}</NuxtLink>
+                  >{{ t('assets.index.insideParent', { name: asset.parent.name }) }}</NuxtLink>
                   <div
                     v-if="features.categories || features.locations"
                     class="mt-1.5 flex items-center gap-1.5 md:hidden"
@@ -908,7 +909,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                     <span
                       v-if="features.categories"
                       class="text-[10px] font-bold text-attic-500"
-                    >{{ asset.category?.name || 'Uncategorized' }}</span>
+                    >{{ asset.category?.name || t('assets.index.uncategorized') }}</span>
                     <span
                       v-if="features.locations && asset.location?.name"
                       class="text-[10px] text-muted"
@@ -917,7 +918,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                   <div
                     v-if="features.collections && asset.collections?.length"
                     class="mt-2 flex flex-wrap gap-1.5 md:hidden"
-                    aria-label="Collections"
+                    :aria-label="t('assets.index.colCollections')"
                   >
                     <NuxtLink
                       v-for="collection in asset.collections"
@@ -929,7 +930,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                   <div
                     v-if="features.tags && asset.tags?.length"
                     class="mt-2 flex flex-wrap gap-1.5"
-                    aria-label="Tags"
+                    :aria-label="t('assets.index.tags')"
                   >
                     <NuxtLink
                       v-for="tag in asset.tags"
@@ -944,7 +945,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                   class="hidden p-3 md:table-cell"
                 >
                   <span class="inline-flex rounded-full bg-attic-50 px-2.5 py-1 text-[10px] font-extrabold text-attic-600 ring-1 ring-attic-100 dark:bg-attic-500/10 dark:text-attic-300 dark:ring-attic-500/20">
-                    {{ asset.category?.name || 'Uncategorized' }}
+                    {{ asset.category?.name || t('assets.index.uncategorized') }}
                   </span>
                 </td>
                 <td
@@ -971,7 +972,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                   <span
                     v-else
                     class="text-xs text-muted"
-                    aria-label="No collections"
+                    :aria-label="t('assets.index.noCollections')"
                   >—</span>
                 </td>
                 <td
@@ -1005,8 +1006,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                   <UDropdownMenu
                     :items="[
                       [
-                        { label: 'View', icon: 'i-lucide-eye', onSelect: () => $router.push(`/assets/${asset.id}`) },
-                        { label: 'Edit', icon: 'i-lucide-pencil', onSelect: () => $router.push(`/assets/${asset.id}/edit`) }
+                        { label: t('assets.index.view'), icon: 'i-lucide-eye', onSelect: () => $router.push(`/assets/${asset.id}`) },
+                        { label: t('assets.index.edit'), icon: 'i-lucide-pencil', onSelect: () => $router.push(`/assets/${asset.id}/edit`) }
                       ]
                     ]"
                   >
@@ -1015,8 +1016,8 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                       color="neutral"
                       icon="i-lucide-more-horizontal"
                       size="sm"
-                      :aria-label="`Actions for ${asset.name}`"
-                      :title="`Actions for ${asset.name}`"
+                      :aria-label="t('assets.index.actionsFor', { name: asset.name })"
+                      :title="t('assets.index.actionsFor', { name: asset.name })"
                     />
                   </UDropdownMenu>
                 </td>
@@ -1029,10 +1030,10 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
         <footer class="flex flex-col gap-3 border-t border-mist-100 bg-mist-50/50 px-4 py-3 dark:border-mist-700 dark:bg-mist-700/20 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <p class="text-xs font-medium text-muted">
             <template v-if="assetsResponse?.total">
-              Showing {{ ((page - 1) * (filters.limit ?? 24)) + 1 }}–{{ Math.min(page * (filters.limit ?? 24), assetsResponse.total) }} of {{ assetsResponse.total }} assets
+              {{ t('assets.index.showing', { from: ((page - 1) * (filters.limit ?? 24)) + 1, to: Math.min(page * (filters.limit ?? 24), assetsResponse.total), total: assetsResponse.total }) }}
             </template>
             <template v-else>
-              No assets to show
+              {{ t('assets.index.noneToShow') }}
             </template>
           </p>
           <div
@@ -1056,7 +1057,7 @@ function openAdvanced(mode: 'advanced' | 'edit' = 'advanced') {
                 class="px-1 text-muted"
               >...</span>
               <UButton
-                :aria-label="`Page ${p}`"
+                :aria-label="t('assets.index.page', { page: p })"
                 :aria-current="p === page ? 'page' : undefined"
                 :variant="p === page ? 'solid' : 'outline'"
                 :color="p === page ? 'primary' : 'neutral'"

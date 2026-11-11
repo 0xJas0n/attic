@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const open = defineModel<boolean>('open', { default: false })
+const { t } = useI18n()
 const { changePassword } = useAuth()
 const currentPassword = ref('')
 const newPassword = ref('')
@@ -20,18 +21,18 @@ async function submit() {
   if (busy.value) return
   error.value = ''
   if (newPassword.value !== confirmPassword.value) {
-    error.value = 'New passwords do not match'
+    error.value = t('misc.passwordDialog.mismatch')
     return
   }
   if (newPassword.value.length < 8) {
-    error.value = 'Password must be at least 8 characters'
+    error.value = t('misc.passwordDialog.tooShort')
     return
   }
   busy.value = true
   try {
     const result = await changePassword(currentPassword.value, newPassword.value)
     if (!result.success) {
-      error.value = result.error || 'Could not change your password. Please try again.'
+      error.value = result.error || t('misc.passwordDialog.failed')
       return
     }
     currentPassword.value = ''
@@ -39,7 +40,7 @@ async function submit() {
     confirmPassword.value = ''
     success.value = true
   } catch {
-    error.value = 'Could not change your password. Please try again.'
+    error.value = t('misc.passwordDialog.failed')
   } finally {
     busy.value = false
   }
@@ -49,8 +50,8 @@ async function submit() {
 <template>
   <UModal
     v-model:open="open"
-    title="Change password"
-    description="Enter your current password and choose a new password."
+    :title="t('misc.passwordDialog.title')"
+    :description="t('misc.passwordDialog.description')"
     :dismissible="!busy"
     :close="!busy"
   >
@@ -69,13 +70,13 @@ async function submit() {
         <UAlert
           v-if="success"
           color="success"
-          title="Password changed successfully"
-          description="Use your new password the next time you sign in."
+          :title="t('misc.passwordDialog.successTitle')"
+          :description="t('misc.passwordDialog.successBody')"
           icon="i-lucide-shield-check"
         />
         <template v-else>
           <UFormField
-            label="Current password"
+            :label="t('misc.passwordDialog.current')"
             name="currentPassword"
           >
             <UInput
@@ -89,9 +90,9 @@ async function submit() {
             />
           </UFormField>
           <UFormField
-            label="New password"
+            :label="t('misc.passwordDialog.new')"
             name="newPassword"
-            help="Use at least 8 characters."
+            :help="t('misc.passwordDialog.newHelp')"
           >
             <UInput
               v-model="newPassword"
@@ -104,7 +105,7 @@ async function submit() {
             />
           </UFormField>
           <UFormField
-            label="Confirm new password"
+            :label="t('misc.passwordDialog.confirm')"
             name="confirmPassword"
           >
             <UInput
@@ -128,7 +129,7 @@ async function submit() {
           :disabled="busy"
           @click="open = false"
         >
-          {{ success ? 'Done' : 'Cancel' }}
+          {{ success ? t('misc.passwordDialog.done') : t('misc.passwordDialog.cancel') }}
         </UButton>
         <UButton
           v-if="!success"
@@ -137,7 +138,7 @@ async function submit() {
           :loading="busy"
           :disabled="busy || !currentPassword || !newPassword || !confirmPassword"
         >
-          Update password
+          {{ t('misc.passwordDialog.update') }}
         </UButton>
       </div>
     </template>

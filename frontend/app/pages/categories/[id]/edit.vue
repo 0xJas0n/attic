@@ -6,6 +6,7 @@ definePageMeta({
 })
 
 const route = useRoute()
+const { t } = useI18n()
 const categoryId = computed(() => route.params.id as string)
 const { data: category, status: categoryStatus } = useApi<Category>(
   () => `/api/categories/${categoryId.value}`
@@ -37,16 +38,16 @@ const { data: category, status: categoryStatus } = useApi<Category>(
       class="w-12 h-12 text-muted mb-4"
     />
     <h2 class="text-lg font-bold text-mist-950 dark:text-white mb-2">
-      Category not found
+      {{ t('catalog.categories.notFound') }}
     </h2>
     <p class="text-muted mb-4">
-      The category you're looking for doesn't exist.
+      {{ t('catalog.categories.notFoundBody') }}
     </p>
     <UButton
       to="/categories"
       variant="soft"
     >
-      Back to Categories
+      {{ t('catalog.categories.back') }}
     </UButton>
   </div>
 </template>

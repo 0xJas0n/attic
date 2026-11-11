@@ -4,9 +4,10 @@ import type { Asset } from '~/types/api'
 
 const props = defineProps<{ asset: Asset, editing?: boolean, removed?: boolean }>()
 const emit = defineEmits<{ remove: [], undo: [] }>()
+const { t } = useI18n()
 const { settings } = useOrganizationSettings()
 const price = computed(() => props.asset.purchase_price == null
-  ? 'Price unknown'
+  ? t('assets.contentsNode.priceUnknown')
   : formatPurchasePrice(props.asset.purchase_price * props.asset.quantity, settings.value.currency))
 </script>
 
@@ -38,26 +39,26 @@ const price = computed(() => props.asset.purchase_price == null
               class="size-3"
               aria-hidden="true"
             />
-            {{ asset.child_count }} {{ asset.child_count === 1 ? 'component' : 'components' }}
+            {{ t('assets.contentsNode.components', { count: asset.child_count }, asset.child_count) }}
           </span>
-          <span>Qty {{ asset.quantity }}</span>
+          <span>{{ t('assets.contentsNode.qty', { count: asset.quantity }) }}</span>
           <span>{{ price }}</span>
         </div>
         <p
           v-if="removed"
           class="text-xs text-muted"
         >
-          Will detach on save, with its contents
+          {{ t('assets.contentsNode.willDetach') }}
         </p>
       </div>
       <UButton
         v-if="editing"
         type="button"
         variant="link"
-        :aria-label="`${removed ? 'Undo removal of' : 'Detach'} ${asset.name}`"
+        :aria-label="removed ? t('assets.contentsNode.undoRemovalOf', { name: asset.name }) : t('assets.contentsNode.detachNamed', { name: asset.name })"
         @click="removed ? emit('undo') : emit('remove')"
       >
-        {{ removed ? 'Undo' : 'Detach' }}
+        {{ removed ? t('assets.contentsNode.undo') : t('assets.contentsNode.detach') }}
       </UButton>
     </div>
   </li>

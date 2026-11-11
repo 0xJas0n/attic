@@ -24,9 +24,9 @@ export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
-    '@nuxt/fonts'
+    '@nuxt/fonts',
+    '@nuxtjs/i18n'
   ],
-
   // SPA mode - disable SSR for embedding in Go binary
   ssr: false,
 
@@ -71,6 +71,21 @@ export default defineNuxtConfig({
         weights: [200, 300, 400, 500, 600, 700, 800]
       }
     ]
+  },
+
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'en',
+    langDir: 'locales',
+    locales: [
+      { code: 'en', language: 'en-US', name: 'English', files: ['en/common.json', 'en/shell.json', 'en/assets.json', 'en/catalog.json', 'en/admin.json', 'en/misc.json'] },
+      { code: 'de', language: 'de-DE', name: 'Deutsch', files: ['de/common.json', 'de/shell.json', 'de/assets.json', 'de/catalog.json', 'de/admin.json', 'de/misc.json'] }
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'attic_locale',
+      fallbackLocale: 'en'
+    }
   },
 
   icon: {

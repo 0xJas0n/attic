@@ -3,6 +3,7 @@ import type { TabsItem } from '@nuxt/ui'
 import type { OrganizationFeatures, CurrencyOptionsResponse } from '~/types/api'
 
 definePageMeta({ middleware: 'auth' })
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const activeTab = computed({
@@ -11,10 +12,10 @@ const activeTab = computed({
     void router.push({ path: '/settings', query: { ...route.query, tab: String(tab) } })
   }
 })
-const tabs = [
-  { label: 'Inventory', value: 'inventory', icon: 'i-lucide-sliders-horizontal', slot: 'inventory' as const },
-  { label: 'Integrations', value: 'integrations', icon: 'i-lucide-plug', slot: 'integrations' as const }
-] satisfies TabsItem[]
+const tabs = computed(() => [
+  { label: t('admin.settings.tabs.inventory'), value: 'inventory', icon: 'i-lucide-sliders-horizontal', slot: 'inventory' as const },
+  { label: t('admin.settings.tabs.integrations'), value: 'integrations', icon: 'i-lucide-plug', slot: 'integrations' as const }
+] satisfies TabsItem[])
 const { isAdmin, loading: authLoading, fetchSession } = useAuth()
 const { features, load, update } = useFeatures()
 const { settings, loaded: settingsLoaded, error: settingsError, load: loadSettings, update: updateSettings } = useOrganizationSettings()
@@ -38,22 +39,22 @@ async function setMCP(enabled: boolean) {
   try {
     await api('/api/organization/mcp', { method: 'PUT', body: JSON.stringify({ enabled }) })
     await refreshMCP()
-    toast.add({ title: enabled ? 'MCP enabled' : 'MCP disabled', color: 'success' })
+    toast.add({ title: enabled ? t('admin.settings.mcpEnabled') : t('admin.settings.mcpDisabled'), color: 'success' })
   } catch {
-    toast.add({ title: 'Could not update MCP', color: 'error' })
+    toast.add({ title: t('admin.settings.mcpUpdateFailed'), color: 'error' })
   } finally { mcpSaving.value = false }
 }
 const savingFeatures = ref(false)
 const savingGeneral = ref(false)
-const labels: Array<{ key: keyof OrganizationFeatures, label: string, description: string }> = [
-  { key: 'locations', label: 'Locations', description: 'Track where assets are stored.' },
-  { key: 'collections', label: 'Collections', description: 'Group assets into custom collections.' },
-  { key: 'tags', label: 'Tags', description: 'Add flexible tags to assets.' },
-  { key: 'categories', label: 'Categories & attributes', description: 'Organize assets and define their custom fields.' },
-  { key: 'conditions', label: 'Conditions', description: 'Track asset condition.' },
-  { key: 'warranties', label: 'Warranties', description: 'Track warranty coverage and expiry.' },
-  { key: 'plugins', label: 'Plugins', description: 'Enable external import plugins and their metadata.' }
-]
+const labels = computed<Array<{ key: keyof OrganizationFeatures, label: string, description: string }>>(() => [
+  { key: 'locations', label: t('admin.settings.feature.locations.label'), description: t('admin.settings.feature.locations.description') },
+  { key: 'collections', label: t('admin.settings.feature.collections.label'), description: t('admin.settings.feature.collections.description') },
+  { key: 'tags', label: t('admin.settings.feature.tags.label'), description: t('admin.settings.feature.tags.description') },
+  { key: 'categories', label: t('admin.settings.feature.categories.label'), description: t('admin.settings.feature.categories.description') },
+  { key: 'conditions', label: t('admin.settings.feature.conditions.label'), description: t('admin.settings.feature.conditions.description') },
+  { key: 'warranties', label: t('admin.settings.feature.warranties.label'), description: t('admin.settings.feature.warranties.description') },
+  { key: 'plugins', label: t('admin.settings.feature.plugins.label'), description: t('admin.settings.feature.plugins.description') }
+])
 
 onMounted(async () => {
   if (authLoading.value) await fetchSession()
@@ -73,10 +74,10 @@ async function saveFeatures() {
       ...features.value,
       attributes: features.value.categories
     })
-    toast.add({ title: 'Features saved', color: 'success' })
+    toast.add({ title: t('admin.settings.featuresSaved'), color: 'success' })
   } catch {
     await load()
-    toast.add({ title: 'Could not save features', color: 'error' })
+    toast.add({ title: t('admin.settings.featuresSaveFailed'), color: 'error' })
   } finally {
     savingFeatures.value = false
   }
@@ -87,11 +88,11 @@ async function saveGeneralSettings() {
   savingGeneral.value = true
   try {
     await updateSettings({ ...draft.value })
-    toast.add({ title: 'General settings saved', color: 'success' })
+    toast.add({ title: t('admin.settings.generalSaved'), color: 'success' })
   } catch {
     await loadSettings()
     draft.value = { ...settings.value }
-    toast.add({ title: 'Could not save general settings', color: 'error' })
+    toast.add({ title: t('admin.settings.generalSaveFailed'), color: 'error' })
   } finally {
     savingGeneral.value = false
   }
@@ -102,10 +103,10 @@ async function saveGeneralSettings() {
   <div class="max-w-3xl mx-auto p-6 lg:p-10 space-y-6">
     <div>
       <h1 class="text-3xl font-black text-mist-950 dark:text-white">
-        Settings
+        {{ t('admin.settings.title') }}
       </h1>
       <p class="text-muted mt-2">
-        Manage your inventory preferences and connected apps.
+        {{ t('admin.settings.subtitle') }}
       </p>
     </div>
     <UTabs
@@ -119,7 +120,7 @@ async function saveGeneralSettings() {
           <UCard>
             <template #header>
               <h2 class="text-lg font-extrabold text-mist-950 dark:text-white">
-                Features
+                {{ t('admin.settings.features') }}
               </h2>
             </template>
             <div class="divide-y divide-mist-100 dark:divide-mist-800">
@@ -138,7 +139,7 @@ async function saveGeneralSettings() {
                 </div>
                 <USwitch
                   v-model="features[item.key]"
-                  :aria-label="`Enable ${item.label}`"
+                  :aria-label="t('admin.settings.enableFeature', { name: item.label })"
                 />
               </div>
             </div>
@@ -147,28 +148,28 @@ async function saveGeneralSettings() {
                 :loading="savingFeatures"
                 @click="saveFeatures"
               >
-                Save features
+                {{ t('admin.settings.saveFeatures') }}
               </UButton>
             </div>
           </UCard>
           <UCard>
             <template #header>
               <h2 class="text-lg font-extrabold text-mist-950 dark:text-white">
-                General settings
+                {{ t('admin.settings.general') }}
               </h2>
             </template>
             <div class="pb-5 flex items-center justify-between gap-6">
               <div>
                 <p class="font-bold text-mist-950 dark:text-white">
-                  Currency
+                  {{ t('admin.settings.currency') }}
                 </p>
                 <p class="text-sm text-muted mt-1">
-                  Used for all asset prices. Changing it relabels existing prices. Amounts are not converted.
+                  {{ t('admin.settings.currencyHint') }}
                 </p>
               </div>
               <USelectMenu
                 v-model="draft.currency"
-                aria-label="Currency"
+                :aria-label="t('admin.settings.currencyAria')"
                 :items="currencies"
                 :disabled="!settingsLoaded || !currenciesReady"
                 class="w-28 shrink-0"
@@ -179,21 +180,21 @@ async function saveGeneralSettings() {
               role="status"
               class="mb-4 text-sm text-muted"
             >
-              Loading currency choices…
+              {{ t('admin.settings.loadingCurrencies') }}
             </p>
             <div
               v-else-if="currencyLoadFailed"
               role="alert"
               class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-error/10 px-4 py-3 text-sm text-error"
             >
-              <span>Currency choices could not be loaded. Your selected currency is unchanged.</span>
+              <span>{{ t('admin.settings.currencyLoadFailed') }}</span>
               <UButton
                 size="sm"
                 color="error"
                 variant="soft"
                 @click="loadCurrencies()"
               >
-                Retry currencies
+                {{ t('admin.settings.retryCurrencies') }}
               </UButton>
             </div>
             <div
@@ -201,14 +202,14 @@ async function saveGeneralSettings() {
               role="alert"
               class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-error/10 px-4 py-3 text-sm text-error"
             >
-              <span>General settings could not be loaded, so they can't be changed right now.</span>
+              <span>{{ t('admin.settings.settingsLoadFailed') }}</span>
               <UButton
                 size="sm"
                 color="error"
                 variant="soft"
                 @click="loadSettings"
               >
-                Retry
+                {{ t('admin.settings.retry') }}
               </UButton>
             </div>
             <div class="mt-6 flex justify-end">
@@ -217,7 +218,7 @@ async function saveGeneralSettings() {
                 :disabled="!settingsLoaded || !currenciesReady || !currencies.includes(draft.currency)"
                 @click="saveGeneralSettings"
               >
-                Save settings
+                {{ t('admin.settings.saveSettings') }}
               </UButton>
             </div>
           </UCard>
@@ -225,22 +226,22 @@ async function saveGeneralSettings() {
       </template>
       <template #integrations>
         <p class="mb-4 text-sm text-muted">
-          Manage connections to external apps and assistants.
+          {{ t('admin.settings.integrationsHint') }}
         </p>
         <UCard>
           <div class="flex items-center justify-between gap-6">
             <div>
               <h2 class="text-lg font-bold">
-                MCP server
+                {{ t('admin.settings.mcpServer') }}
               </h2>
               <p class="mt-1 text-sm text-muted">
-                Connect an assistant to your inventory using scoped API keys.
+                {{ t('admin.settings.mcpHint') }}
               </p>
             </div>
             <USwitch
               :model-value="mcp?.enabled ?? false"
               :disabled="mcpSaving || mcpStatus !== 'success' || !!mcpError || !mcp"
-              aria-label="Enable MCP server"
+              :aria-label="t('admin.settings.mcpEnableAria')"
               @update:model-value="setMCP"
             />
           </div>
@@ -249,17 +250,17 @@ async function saveGeneralSettings() {
             role="status"
             class="mt-4 text-sm text-muted"
           >
-            Loading MCP status…
+            {{ t('admin.settings.mcpLoading') }}
           </p>
           <UAlert
             v-else-if="mcpError"
             class="mt-4"
             color="error"
-            title="Could not load MCP status"
+            :title="t('admin.settings.mcpLoadFailed')"
           >
             <template #actions>
               <UButton
-                label="Retry"
+                :label="t('admin.settings.retryLabel')"
                 color="error"
                 variant="outline"
                 @click="refreshMCP()"
@@ -270,7 +271,7 @@ async function saveGeneralSettings() {
             v-else-if="mcp"
             class="mt-4 text-sm leading-6 text-muted"
           >
-            {{ mcp.enabled ? 'Members can connect assistants using their own API keys.' : 'MCP is off for this workspace. API keys still work with the REST API.' }}
+            {{ mcp.enabled ? t('admin.settings.mcpOnNote') : t('admin.settings.mcpOffNote') }}
           </p>
           <div class="mt-5 border-t border-mist-100 pt-5 dark:border-mist-700">
             <UButton
@@ -278,7 +279,7 @@ async function saveGeneralSettings() {
               variant="outline"
               icon="i-lucide-arrow-up-right"
             >
-              View connection instructions in your profile
+              {{ t('admin.settings.viewInstructions') }}
             </UButton>
           </div>
         </UCard>

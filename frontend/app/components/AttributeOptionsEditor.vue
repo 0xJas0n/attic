@@ -3,6 +3,7 @@ import type { AttributeOptionDraft } from '~/types/api'
 import { createAttributeOptionDraft } from '~/utils/attributeOptions'
 
 const options = defineModel<AttributeOptionDraft[]>({ default: () => [] })
+const { t } = useI18n()
 const newLabel = ref('')
 const newValue = ref('')
 const editedValue = ref(false)
@@ -40,10 +41,10 @@ function move(index: number, direction: number) {
 <template>
   <section class="space-y-4">
     <h2 class="font-semibold text-mist-950 dark:text-white">
-      Options
+      {{ t('catalog.attributeOptions.title') }}
     </h2>
     <p class="text-sm text-muted">
-      Option changes are saved when you save the attribute.
+      {{ t('catalog.attributeOptions.hint') }}
     </p>
     <div
       v-for="(option, index) in options"
@@ -56,14 +57,14 @@ function move(index: number, direction: number) {
       >
         <UInput
           :model-value="drafts[option.draftId]!.label"
-          :aria-label="`Label for ${option.label}`"
-          placeholder="Label"
+          :aria-label="t('catalog.attributeOptions.labelFor', { name: option.label })"
+          :placeholder="t('catalog.attributeOptions.label')"
           @update:model-value="editOption(option, 'label', $event)"
         />
         <UInput
           :model-value="drafts[option.draftId]!.value"
-          :aria-label="`Stored value for ${option.label}`"
-          placeholder="Stored value"
+          :aria-label="t('catalog.attributeOptions.valueFor', { name: option.label })"
+          :placeholder="t('catalog.attributeOptions.value')"
           @update:model-value="editOption(option, 'value', $event)"
         />
       </div>
@@ -73,8 +74,8 @@ function move(index: number, direction: number) {
           color="error"
           variant="soft"
           icon="i-lucide-trash-2"
-          :aria-label="`Delete ${option.label || 'option'}`"
-          title="Delete option"
+          :aria-label="t('catalog.attributeOptions.deleteAria', { name: option.label || t('catalog.attributeOptions.optionFallback') })"
+          :title="t('catalog.attributeOptions.deleteTitle')"
           @click="deleteOption(option)"
         />
         <UButton
@@ -82,7 +83,7 @@ function move(index: number, direction: number) {
           color="neutral"
           variant="ghost"
           :disabled="index === 0"
-          :aria-label="`Move ${option.label} up`"
+          :aria-label="t('catalog.attributeOptions.moveUp', { name: option.label })"
           @click="move(index, -1)"
         >
           ↑
@@ -92,7 +93,7 @@ function move(index: number, direction: number) {
           color="neutral"
           variant="ghost"
           :disabled="index === options.length - 1"
-          :aria-label="`Move ${option.label} down`"
+          :aria-label="t('catalog.attributeOptions.moveDown', { name: option.label })"
           @click="move(index, 1)"
         >
           ↓
@@ -102,13 +103,13 @@ function move(index: number, direction: number) {
     <div class="grid gap-2 sm:grid-cols-2">
       <UInput
         v-model="newLabel"
-        aria-label="New option label"
-        placeholder="Option label"
+        :aria-label="t('catalog.attributeOptions.newLabelAria')"
+        :placeholder="t('catalog.attributeOptions.newLabel')"
       />
       <UInput
         v-model="newValue"
-        aria-label="New option stored value"
-        placeholder="Stored value"
+        :aria-label="t('catalog.attributeOptions.newValueAria')"
+        :placeholder="t('catalog.attributeOptions.value')"
         @update:model-value="editedValue = true"
       />
     </div>
@@ -117,7 +118,7 @@ function move(index: number, direction: number) {
       icon="i-lucide-plus"
       @click="addOption"
     >
-      Add option
+      {{ t('catalog.attributeOptions.add') }}
     </UButton>
   </section>
 </template>

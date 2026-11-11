@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { SavedFilter } from '~/types/api'
 
+const { t, locale } = useI18n()
+
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
@@ -13,7 +15,6 @@ useHead({
   }
 })
 
-const { t, locale } = useI18n()
 const title = computed(() => t('shell.meta.title'))
 const description = computed(() => t('shell.meta.description'))
 
